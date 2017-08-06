@@ -80,6 +80,13 @@ namespace DosDungeon.Models
         #endregion // Properties
 
         #region Methods
+
+        #region GenerateLevel
+        /// <summary>
+        /// Generates a new random level of the specified size
+        /// </summary>
+        /// <param name="size">the size of the level to generate (square)</param>
+        /// <returns>A new level instance</returns>
         internal static Level GenerateLevel(int size = 16)
         {
             Level l = new Level(size);
@@ -115,7 +122,15 @@ namespace DosDungeon.Models
 
             return (l);
         }
+        #endregion // GenerateLevel
 
+        #region GetField
+        /// <summary>
+        /// Gets a specific field's descriptive enum
+        /// </summary>
+        /// <param name="x">X pos of the field</param>
+        /// <param name="y">Y pos of the field</param>
+        /// <returns></returns>
         internal Field GetField(int x, int y)
         {
             // out of bounds
@@ -133,7 +148,14 @@ namespace DosDungeon.Models
             }
             return (result);
         }
+        #endregion // GetField
 
+        #region SetPlayerPos
+        /// <summary>
+        /// Sets the position of the player to the current field
+        /// </summary>
+        /// <param name="x">X pos</param>
+        /// <param name="y">Y pos</param>
         internal void SetPlayerPos(int x, int y)
         {
             this.field[x, y] = (int)Field.Player;
@@ -144,6 +166,7 @@ namespace DosDungeon.Models
             this.playerX = x;
             this.playerY = y;
         }
+        #endregion // SetPlayerPos
 
         #endregion // Methods
 

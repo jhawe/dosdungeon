@@ -38,6 +38,7 @@ namespace DosDungeon.Models
                 return this.posX;
             }
         }
+
         internal int PosY
         {
             get
