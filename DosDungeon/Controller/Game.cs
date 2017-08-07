@@ -22,6 +22,9 @@ namespace DosDungeon.Controller
         readonly TimeSpan MaxElapsedTime = TimeSpan.FromTicks(TimeSpan.TicksPerSecond / 10);
         private TimeSpan lastTime;
 
+        // random number generator used for alls random processes in the game
+        internal static Random RNG = new Random(42);
+
         #endregion // Class Member
 
         #region Constructor
@@ -36,9 +39,9 @@ namespace DosDungeon.Controller
             this.view = new NaiveView(gf);
             this.stopWatch = sw;
             this.player = new Player("Hans");
-
+            
             // generate first level
-            this.level = Level.GenerateLevel(16);
+            this.level = Level.GenerateLevel(32);
             int startX = level.StartX;
             int startY = level.StartY;
 
@@ -66,7 +69,7 @@ namespace DosDungeon.Controller
                 TimeSpan elapsedTime = currentTime - lastTime;
 
                 // only update after 0.5 seconds
-                if (elapsedTime > TimeSpan.FromSeconds(0.5))
+                if (elapsedTime > TimeSpan.FromSeconds(0.3))
                 {
                     lastTime = currentTime;
                     // update data
@@ -105,6 +108,14 @@ namespace DosDungeon.Controller
         /// </summary>
         private void UpdateModels()
         {
+            MovePlayer();
+            
+        }
+        #endregion // UpdateModels
+
+        #region MovePlayer
+        private void MovePlayer()
+        {
             Move m;
             // check for registered move first
             if (this.nextMove != null)
@@ -123,8 +134,8 @@ namespace DosDungeon.Controller
                     MakeMove(m, this.player, this.level);
                 }
             }
-        }
-        #endregion // UpdateModels
+        } 
+        #endregion // MovePlayer
 
         #region IsValidMove
         /// <summary>
@@ -142,6 +153,7 @@ namespace DosDungeon.Controller
             }
             return false;
         }
+        #endregion // IsValidMove
 
         #region MakeMove
         /// <summary>

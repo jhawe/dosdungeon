@@ -20,7 +20,7 @@ namespace DosDungeon.Views
 
         #region Update
         /// <summary>
-        /// Updates the DOS view 
+        /// Updates the DOS-like view 
         /// </summary>
         /// <param name="level">The currently played lavel</param>
         /// <param name="player">The current player instance</param>
