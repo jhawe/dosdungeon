@@ -6,12 +6,12 @@ using System.Threading.Tasks;
 
 namespace DosDungeon.Models
 {
-    internal class Move
+    internal class Position
     {
         private int x;
         private int y;
 
-        internal Move(int x, int y)
+        internal Position(int x, int y)
         {
             this.x = x;
             this.y = y;

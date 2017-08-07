@@ -14,7 +14,7 @@ namespace DosDungeon.Controller
         private NaiveView view = null;
         private Player player;
         private Level level;
-        private Move nextMove = null;
+        private Position nextMove = null;
 
         private Stopwatch stopWatch;
 
@@ -23,7 +23,7 @@ namespace DosDungeon.Controller
         private TimeSpan lastTime;
 
         // random number generator used for alls random processes in the game
-        internal static Random RNG = new Random(42);
+        internal static Random RNG = new Random();
 
         #endregion // Class Member
 
@@ -41,12 +41,12 @@ namespace DosDungeon.Controller
             this.player = new Player("Hans");
             
             // generate first level
-            this.level = Level.GenerateLevel(32);
-            int startX = level.StartX;
-            int startY = level.StartY;
+            this.level = Level.GenerateLevel(16);
+            int startX = level.Start.X;
+            int startY = level.Start.Y;
 
             // set player on the current board
-            Move m = new Move(startX, startY);
+            Position m = new Position(startX, startY);
             this.player.Move(m);
             this.level.SetPlayerPos(this.player.PosX, this.player.PosY);
         }
@@ -94,7 +94,7 @@ namespace DosDungeon.Controller
         /// </summary>
         private void RegisterMove()
         {
-            Move m = GetMove(this.player);
+            Position m = GetMove(this.player);
             if(m != null && IsValidMove(m, this.level))
             {
                 this.nextMove = m;
@@ -108,15 +108,14 @@ namespace DosDungeon.Controller
         /// </summary>
         private void UpdateModels()
         {
-            MovePlayer();
-            
+            MovePlayer();            
         }
         #endregion // UpdateModels
 
         #region MovePlayer
         private void MovePlayer()
         {
-            Move m;
+            Position m;
             // check for registered move first
             if (this.nextMove != null)
             {
@@ -144,10 +143,10 @@ namespace DosDungeon.Controller
         /// <param name="m">The move to be executed</param>
         /// <param name="l">The current level</param>
         /// <returns>True if move is valid, otherwise false</returns>
-        private bool IsValidMove(Move m, Level l)
+        private bool IsValidMove(Position m, Level l)
         {
             Field f = l.GetField(m.X, m.Y);
-            if (f == Field.Free)
+            if (f != Field.Blocked && f != Field.NA)
             {
                 return true;
             }
@@ -162,7 +161,7 @@ namespace DosDungeon.Controller
         /// <param name="m">The move</param>
         /// <param name="p">The player</param>
         /// <param name="l">The board/field</param>
-        private void MakeMove(Move m, Player p, Level l)
+        private void MakeMove(Position m, Player p, Level l)
         {
             p.Move(m);
             l.SetPlayerPos(p.PosX, p.PosY);
@@ -176,27 +175,27 @@ namespace DosDungeon.Controller
         /// </summary>
         /// <param name="p"></param>
         /// <returns></returns>
-        private Move GetMove(Player p)
+        private Position GetMove(Player p)
         {
             if (Keyboard.IsKeyDown(Key.Left))
             {
 
-                return new Move(p.PosX, p.PosY - 1);
+                return new Position(p.PosX, p.PosY - 1);
             }
             else if (Keyboard.IsKeyDown(Key.Right))
             {
 
-                return new Move(p.PosX, p.PosY + 1);
+                return new Position(p.PosX, p.PosY + 1);
             }
             else if (Keyboard.IsKeyDown(Key.Up))
             {
 
-                return new Move(p.PosX - 1, p.PosY);
+                return new Position(p.PosX - 1, p.PosY);
             }
             else if (Keyboard.IsKeyDown(Key.Down))
             {
 
-                return new Move(p.PosX + 1, p.PosY);
+                return new Position(p.PosX + 1, p.PosY);
             }
             return null;
         }

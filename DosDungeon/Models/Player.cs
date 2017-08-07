@@ -47,7 +47,7 @@ namespace DosDungeon.Models
             }
         }
 
-        internal void Move(Move m)
+        internal void Move(Position m)
         {
             this.posX = m.X;
             this.posY = m.Y;

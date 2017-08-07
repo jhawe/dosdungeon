@@ -16,12 +16,13 @@ namespace DosDungeon.Models
         #region Class Member
         int size;
         int[,] field;
-        private int startX;
-        private int startY;
-        private int endY;
-        private int endX;
+        private Position start;
+        private Position end;
         private int playerX = -1;
         private int playerY = -1;
+        private LinkedList<Position> mainPath;
+        private List<LinkedList<Position>> branches;
+        private int previous;
         #endregion // Class Member
 
         #region Constructor
@@ -30,7 +31,9 @@ namespace DosDungeon.Models
         /// </summary>
         public Level() : this(16)
         {
-            // default size is 16            
+            // member init
+            this.mainPath = new LinkedList<Position>();
+            this.branches = new List<LinkedList<Position>>();
         }
 
         /// <summary>
@@ -40,6 +43,8 @@ namespace DosDungeon.Models
         internal Level(int size)
         {
             // member init
+            this.mainPath = new LinkedList<Position>();
+            this.branches = new List<LinkedList<Position>>();
             this.size = size;
             this.field = new int[this.size, this.size];
             // init field defaults
@@ -63,35 +68,19 @@ namespace DosDungeon.Models
             }
         }
 
-        internal int StartX
+        internal Position Start
         {
             get
             {
-                return this.startX;
+                return this.start;
             }
         }
 
-        internal int StartY
+        internal Position End
         {
             get
             {
-                return this.startY;
-            }
-        }
-
-        internal int EndX
-        {
-            get
-            {
-                return this.endX;
-            }
-        }
-
-        internal int EndY
-        {
-            get
-            {
-                return this.endY;
+                return this.end;
             }
         }
 
@@ -124,7 +113,7 @@ namespace DosDungeon.Models
 
         private static void GenerateBranches(Level l)
         {
-            // do nothing for now
+
         }
 
         private static void GeneratePath(Level l)
@@ -134,21 +123,21 @@ namespace DosDungeon.Models
             // possible directions in which to go), however it is always
             // slightly attracted to the end position in the level
 
-            int currentX = l.startX;
-            int currentY = l.startY;
+            int currentX = l.Start.X;
+            int currentY = l.Start.Y;
 
             bool proceed = true;
 
             while (proceed)
             {
                 // get possible directions
-                List<Move> pmoves = GetPossibleDirections(l, currentX, currentY);
+                List<Position> pmoves = GetPossibleDirections(l, new Position(currentX, currentY));
 
                 // get distances to end position on the field
-                float[] distances = GetDistances(l.endX, l.endY, pmoves);
-                // choose a move more likely directed towards the end position,
+                float[] distances = GetDistances(l.End.X, l.End.Y, pmoves);
+                // choose a Position more likely directed towards the end position,
                 // with some room for randomness
-                Move minDistMove = null;
+                Position minDistMove = null;
                 int minDistMoveIdx = -1;
                 float minDist = Enumerable.Min<float>(distances);
                 for (int i = 0; i < distances.Length; i++)
@@ -163,7 +152,7 @@ namespace DosDungeon.Models
                 // TODO make a random choice, slightly favored to the 
                 // minDistMove
                 double r = Game.RNG.NextDouble();
-                Move c = null;
+                Position c = null;
                 if (pmoves.Count == 4)
                 {
                     if (r < 0.25) c = pmoves[0];
@@ -174,13 +163,13 @@ namespace DosDungeon.Models
                     if (Game.RNG.NextDouble() > 0.75)
                     {
                         c = pmoves[minDistMoveIdx];
-                    }                    
+                    }
                 }
                 else if (pmoves.Count == 3)
                 {
                     if (r < 0.33) c = pmoves[0];
                     if (r >= 0.33 && r < 0.66) c = pmoves[1];
-                    if (r >= 0.66) c = pmoves[2];   
+                    if (r >= 0.66) c = pmoves[2];
                     // extra chance for mindistmove
                     if (Game.RNG.NextDouble() > 0.75)
                     {
@@ -201,27 +190,29 @@ namespace DosDungeon.Models
                 {
                     c = minDistMove;
                 }
-               
-                // set the new free field
-                l.field[c.X, c.Y] = (int)Field.Free;
+
+                // set the new field for the main path
+                l.field[c.X, c.Y] = (int)Field.Main;
                 currentX = c.X;
                 currentY = c.Y;
+                l.mainPath.AddLast(c);
 
                 // check whether we arrived at the end
-                if (currentX == l.endX && currentY == l.endY)
+                if (currentX == l.End.X && currentY == l.End.Y)
                 {
+                    l.mainPath.AddLast(c);
                     proceed = false;
                 }
             }
         }
 
         #region GetDistances
-        private static float[] GetDistances(int endX, int endY, List<Move> pmoves)
+        private static float[] GetDistances(int endX, int endY, List<Position> pmoves)
         {
             float[] result = new float[pmoves.Count];
             for (int i = 0; i < result.Length; i++)
             {
-                Move m = pmoves[i];
+                Position m = pmoves[i];
                 float dx = endX - m.X;
                 float dy = endY - m.Y;
 
@@ -240,60 +231,74 @@ namespace DosDungeon.Models
         /// <param name="x">The current x position</param>
         /// <param name="y">The current y position</param>
         /// <returns>A list of moves to which a path could be extended</returns>
-        private static List<Move> GetPossibleDirections(Level l, int x, int y)
+        private static List<Position> GetPossibleDirections(Level l, Position pos)
         {
-            // generate a move for each possible direction
-            // only be able to move to "blocked" fields (default field setting)
+            // generate a Position for each possible direction
+            // only be able to Position to "blocked" fields (default field setting)
             // bounds get checked in GetField-method
 
-            List<Move> result = new List<Move>();
+            int x = pos.X;
+            int y = pos.Y;
 
+            List<Position> result = new List<Position>();
+
+            // check whether the next move would be the end position
+            if (Math.Abs(l.End.X-x)==1 && Math.Abs(l.End.Y-y)==0
+                || Math.Abs(l.End.X - x) == 0 && Math.Abs(l.End.Y - y) == 1)
+            {
+                result.Add(new Position(l.End.X, l.end.Y));
+                return result;
+            }
+            
             // bottom
             int x1 = x + 1;
             int y1 = y;
             Field f = l.GetField(x1, y1);
-            if (f == Field.Blocked && 
-                (Math.Abs(x1-l.endX)<Math.Abs(x-l.endX) || 
-                Math.Abs(y1 - l.endY) < Math.Abs(y - l.endY)))
+
+            if (f != Field.Main && f != Field.NA
+                && IsMoveTowardsEnd(l, x, y, x1, y1))
             {
-                result.Add(new Move(x1, y1));
+                result.Add(new Position(x1, y1));
             }
             // top
             x1 = x - 1;
             y1 = y;
             f = l.GetField(x1, y1);
-            if (f == Field.Blocked &&
-                (Math.Abs(x1 - l.endX) < Math.Abs(x - l.endX) ||
-                Math.Abs(y1 - l.endY) < Math.Abs(y - l.endY)))
+            if (f != Field.Main && f != Field.NA 
+                && IsMoveTowardsEnd(l, x, y, x1, y1))
             {
-                result.Add(new Move(x1, y1));
+                result.Add(new Position(x1, y1));
             }
 
             // left
             x1 = x;
             y1 = y - 1;
             f = l.GetField(x1, y1);
-            if (f == Field.Blocked &&
-                (Math.Abs(x1 - l.endX) < Math.Abs(x - l.endX) ||
-                Math.Abs(y1 - l.endY) < Math.Abs(y - l.endY)))
+            if (f != Field.Main && f != Field.NA 
+                && IsMoveTowardsEnd(l, x, y, x1, y1))
             {
-                result.Add(new Move(x1, y1));
+                result.Add(new Position(x1, y1));
             }
 
             // right
             x1 = x;
             y1 = y + 1;
             f = l.GetField(x1, y1);
-            if (f == Field.Blocked &&
-                (Math.Abs(x1 - l.endX) < Math.Abs(x - l.endX) ||
-                Math.Abs(y1 - l.endY) < Math.Abs(y - l.endY)))
+            if (f != Field.Main && f != Field.NA 
+                && IsMoveTowardsEnd(l, x, y, x1, y1))
             {
-                result.Add(new Move(x1, y1));
+                result.Add(new Position(x1, y1));
             }
 
             return (result);
         }
         #endregion // GetPossibleDirections
+
+        private static bool IsMoveTowardsEnd(Level l, int x, int y, int x1, int y1)
+        {
+            return (Math.Abs(x1 - l.End.X) < Math.Abs(x - l.End.X) ||
+                Math.Abs(y1 - l.End.Y) < Math.Abs(y - l.End.Y));
+        }
 
         private static void GenerateStartEnd(Level l)
         {
@@ -355,10 +360,21 @@ namespace DosDungeon.Models
                 }
             }
             // set positions to level instance
-            l.startX = startX;
-            l.startY = startY;
-            l.endX = endX;
-            l.endY = endY;
+            l.SetStart(new Position(startX, startY));
+            l.SetEnd(new Position(endX, endY));
+        }
+
+        private void SetEnd(Position position)
+        {
+            this.end = position;
+            this.field[this.end.X, this.end.Y] = (int)Field.Main;
+        }
+
+        private void SetStart(Position position)
+        {
+            this.start = position;
+            this.field[this.start.X, this.start.Y] = (int)Field.Main;
+            this.mainPath.AddLast(position);
         }
 
         private static void GenerateNaive(Level l)
@@ -389,11 +405,9 @@ namespace DosDungeon.Models
             }
 
             // set start position
-            l.startX = 15;
-            l.startY = 0;
+            l.SetStart(new Position(15, 0));
             // set end position
-            l.endX = 0;
-            l.endY = 0;
+            l.SetStart(new Position(0, 0));
         }
 
         #endregion // GenerateLevel
@@ -431,15 +445,16 @@ namespace DosDungeon.Models
         /// <param name="x">X pos</param>
         /// <param name="y">Y pos</param>
         internal void SetPlayerPos(int x, int y)
-        {
-            this.field[x, y] = (int)Field.Player;
+        {            
             // reset previous player field to be free again
             if (this.playerX != -1)
             {
-                this.field[this.playerX, this.playerY] = (int)Field.Free;
+                this.field[this.playerX, this.playerY] = this.previous;
             }
+            this.previous = this.field[x, y];
+            this.field[x, y] = (int)Field.Player;
             this.playerX = x;
-            this.playerY = y;
+            this.playerY = y;            
         }
         #endregion // SetPlayerPos
 

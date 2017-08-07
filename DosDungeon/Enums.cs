@@ -14,10 +14,20 @@ namespace DosDungeon
 
     internal enum Field
     {
+        // a normal free field
         Free = 1,
+        // a blocked field
         Blocked = 2,
+        // our hero
         Player = 4,
+        // a filthy monster
         Monster = 8,
-        NA
+        // the main path
+        Main = 16,
+        // a path branched from the main path
+        Branch = 32,
+        // heart item to fill up health point
+        Heart = 64,
+        NA = 128
     }
 }
