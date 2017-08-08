@@ -18,7 +18,7 @@ namespace DosDungeon.Controller
         private Player player = null;
         private Level level = null;
         private Position nextMove = null;
-        private int levelSize = 16;
+        private int levelSize = 8;
         private Stopwatch stopWatch;
         readonly TimeSpan TargetElapsedTime = TimeSpan.FromTicks(TimeSpan.TicksPerSecond / 120);
         readonly TimeSpan MaxElapsedTime = TimeSpan.FromTicks(TimeSpan.TicksPerSecond / 10);
@@ -27,6 +27,7 @@ namespace DosDungeon.Controller
         // random number generator used for alls random processes in the game
         internal static Random RNG = new Random();
         private bool enterDown;
+        private bool attackDown;
 
         #endregion // Class Member
 
@@ -63,10 +64,48 @@ namespace DosDungeon.Controller
 
             // set player on the current board
             Position m = new Position(startX, startY);
-            this.player.Move(m);
+            this.player.SetPosition(m);
             this.level.SetPlayerPos(this.player.Position);
+
+            // set the player facing to one of the next free fields
+            if (this.level.IsFieldAccessible(m.X + 1, m.Y))
+            {
+                this.player.SetFace(GetMoveDirection(m, new Position(m.X + 1, m.Y)));
+            }
+            else if (this.level.IsFieldAccessible(m.X - 1, m.Y))
+            {
+                this.player.SetFace(GetMoveDirection(m, new Position(m.X - 1, m.Y)));
+            }
+            else if (this.level.IsFieldAccessible(m.X, m.Y + 1))
+            {
+                this.player.SetFace(GetMoveDirection(m, new Position(m.X, m.Y + 1)));
+            }
+            else if (this.level.IsFieldAccessible(m.X, m.Y - 1))
+            {
+                this.player.SetFace(GetMoveDirection(m, new Position(m.X, m.Y - 1)));
+            }
         }
         #endregion // InitLevel
+
+        internal Direction GetMoveDirection(Position from, Position to)
+        {
+            if (from.X < to.X)
+            {
+                return Direction.Down;
+            }
+            else if (from.X > to.X)
+            {
+                return Direction.Up;
+            }
+            else if (from.Y < to.Y)
+            {
+                return Direction.Right;
+            }
+            else
+            {
+                return Direction.Left;
+            }
+        }
 
         #region Update
         /// <summary>
@@ -81,7 +120,7 @@ namespace DosDungeon.Controller
             TimeSpan elapsedTime = currentTime - lastTime;
 
             // only update after 0.5 seconds
-            if (elapsedTime > TimeSpan.FromSeconds(0.3))
+            if (elapsedTime > TimeSpan.FromSeconds(0.1))
             {
                 lastTime = currentTime;
 
@@ -91,7 +130,7 @@ namespace DosDungeon.Controller
                     UpdateModels();
 
                     // update view
-                    this.view.Update(this.level);
+                    this.view.Update(this.level, this.player);
 
                     // check whether the player finished
                     if (this.level.End.X == this.player.Position.X
@@ -102,14 +141,14 @@ namespace DosDungeon.Controller
                     }
                 }
                 else if (this.state == GameState.LevelFinished)
-                {                    
+                {
                     if (this.enterDown)
                     {
                         this.enterDown = false;
                         InitLevel(this.levelSize);
                         this.state = GameState.Running;
                     }
-                    this.view.Update(this.level);
+                    this.view.Update(this.level, this.player);
                 }
             }
             else
@@ -128,12 +167,13 @@ namespace DosDungeon.Controller
         private void RegisterKeyDown()
         {
             this.enterDown = Keyboard.IsKeyDown(Key.Enter);
+            this.attackDown = Keyboard.IsKeyDown(Key.Space);
 
-            Position m = GetMove(this.player);
+            /*Position m = GetMove(this.player);
             if (m != null && IsValidMove(m, this.level))
             {
                 this.nextMove = m;
-            }
+            }*/
         }
         #endregion // RegisterKeyDown
 
@@ -143,11 +183,35 @@ namespace DosDungeon.Controller
         /// </summary>
         private void UpdateModels()
         {
+            PlayerAction();
             MovePlayer();
         }
+
+        private void PlayerAction()
+        {
+            // only current action is to attack
+            if (this.attackDown | Keyboard.IsKeyDown(Key.Space))
+            {
+                this.attackDown = false;
+
+                // one attack currently kills monsters
+                Position af = this.player.AttackField;
+                Field ap = this.level.GetField(af);
+                if (ap == Field.Monster)
+                {
+                    this.level.SetField(af, Field.Free);
+                    this.player.MonstersKilledUp();
+                    this.player.GoldUp(10);
+                }
+            }
+        }
+
         #endregion // UpdateModels
 
         #region MovePlayer
+        /// <summary>
+        /// Move the player to a new field based on which arrow key is currently pressed
+        /// </summary>
         private void MovePlayer()
         {
             Position m;
@@ -179,9 +243,8 @@ namespace DosDungeon.Controller
         /// <param name="l">The current level</param>
         /// <returns>True if move is valid, otherwise false</returns>
         private bool IsValidMove(Position m, Level l)
-        {
-            Field f = l.GetField(m.X, m.Y);
-            if (f != Field.Blocked && f != Field.NA)
+        {            
+            if (l.IsFieldAccessible(m.X, m.Y))
             {
                 return true;
             }
@@ -198,22 +261,49 @@ namespace DosDungeon.Controller
         /// <param name="l">The board/field</param>
         private void MakeMove(Position m, Player p, Level l)
         {
-            p.Move(m);
-
-            l.SetPlayerPos(p.Position);
-
-            // check whether we found a treasure
-            if (l.GetField(p.Position.X, p.Position.Y) == Field.Treasure)
+            Direction dir = GetMoveDirection(p.Position, m);
+            if (p.Face == dir)
             {
-                OpenTreasure();                
+                // set the new position
+                p.SetPosition(m);
+                // check whether we found a treasure
+                if (l.GetField(p.Position.X, p.Position.Y) == Field.Treasure)
+                {
+                    OpenTreasure(p);
+                }
+                l.SetPlayerPos(p.Position);
             }
+            else
+            {
+                // only change direction
+                p.SetFace(dir);
+            }         
         }
         #endregion // MakeMove
 
-        private void OpenTreasure()
+        #region OpenTreasure
+        /// <summary>
+        /// Open a treasure for the specified player
+        /// </summary>
+        /// <param name="p">The player opening the treasure</param>
+        private void OpenTreasure(Player p)
         {
-            throw new NotImplementedException();
+            // either a heart or some gold?
+            var r = Game.RNG.NextDouble();
+            // heart has only 25% prob
+            if (r <= 0.25)
+            {
+                p.HealthUp(1);
+            }
+            else
+            {
+                // give at least 10 gold, up to maximal 100
+                r = Game.RNG.NextDouble();
+                var amount = (int)Math.Ceiling(Math.Max(r * 100, 10));
+                p.GoldUp(amount);
+            }
         }
+        #endregion // OpenTreasure
 
         #region GetMove
         /// <summary>
@@ -229,7 +319,6 @@ namespace DosDungeon.Controller
 
             if (Keyboard.IsKeyDown(Key.Left))
             {
-
                 return new Position(x, y - 1);
             }
             else if (Keyboard.IsKeyDown(Key.Right))

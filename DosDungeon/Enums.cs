@@ -31,4 +31,12 @@ namespace DosDungeon
         Treasure = 64,
         NA = 128
     }
+
+    internal enum Direction
+    {
+        Up,
+        Down,
+        Left,
+        Right
+    }
 }

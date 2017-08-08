@@ -107,11 +107,48 @@ namespace DosDungeon.Models
                 GeneratePath(l);
                 GenerateBranches(l);
                 PopulateTreasures(l);
+                PopulateMonsters(l);
             }
 
             return (l);
         }
+
+        private static void PopulateMonsters(Level l)
+        {
+            // set one random monster
+            for(int i = 0; i<l.size; i++)
+            {
+                for(int j = 0; j<l.size; j++)
+                {
+                    if(l.GetField(i,j) == Field.Branch)
+                    {
+                        l.SetField(new Position(i, j), Field.Monster);
+                        return;
+                    }
+                }
+            }
+        }
         #endregion // GenerateLevel
+
+        #region IsFieldAccessible
+        /// <summary>
+        /// Checks whether the specified coordinates
+        /// piont to a free field (main,branch,treasure,free)
+        /// </summary>
+        /// <param name="x"></param>
+        /// <param name="y"></param>
+        /// <returns></returns>
+        internal bool IsFieldAccessible(int x, int y)
+        {
+            Field f = GetField(x, y);
+            if(f == Field.Branch || 
+                f == Field.Free || f == Field.Main || f == Field.Treasure)
+            {
+                return true;
+            }
+            return false;
+        }
+        #endregion // IsFieldAccessible
 
         #region GenerateBranches
         /// <summary>
@@ -230,6 +267,17 @@ namespace DosDungeon.Models
             }
             l.AddBranch(b);
         }
+
+        internal void SetField(Position af, Field f)
+        {
+            this.field[af.X, af.Y] = (int)f;
+        }
+
+        internal Field GetField(Position p)
+        {
+            return GetField(p.X, p.Y);
+        }
+
         #endregion // GrowBranch
 
 
@@ -679,6 +727,13 @@ namespace DosDungeon.Models
                 this.field[this.playerPos.X, this.playerPos.Y] = this.playerField;
             }
             this.playerField = this.field[pos.X, pos.Y];
+            // if the current field was a treasure field, it gets changed to a
+            // normal free field (main or branch does not matter in that case anymore)
+            if(this.playerField == (int)Field.Treasure)
+            {
+                this.playerField = (int)Field.Free;
+            }
+
             this.field[pos.X, pos.Y] = (int)Field.Player;
             this.playerPos = pos;
             

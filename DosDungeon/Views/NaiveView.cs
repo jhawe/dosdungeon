@@ -27,7 +27,7 @@ namespace DosDungeon.Views
         /// </summary>
         /// <param name="level">The currently played lavel</param>
         /// <param name="player">The current player instance</param>
-        internal void Update(Level level)
+        internal void Update(Level level, Player player)
         {
             GameForm gf = this.gameForm;
             gf.Board.Clear();
@@ -38,6 +38,8 @@ namespace DosDungeon.Views
             if (level.IsFinished)
             {
                 sb.AppendLine("Congratulations! You finished the level!");
+                sb.AppendLine("Total Gold: " + player.Gold);
+                sb.AppendLine("Total Health: " + player.Health);
                 sb.AppendLine("Press [ENTER] to load the next level.");
             }
             else
