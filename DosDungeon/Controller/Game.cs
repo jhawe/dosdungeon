@@ -10,20 +10,23 @@ namespace DosDungeon.Controller
     internal class Game
     {
         #region Class Member
+        /// <summary>
+        /// Class member
+        /// </summary>
         private GameState state = GameState.Running;
         private NaiveView view = null;
-        private Player player;
-        private Level level;
+        private Player player = null;
+        private Level level = null;
         private Position nextMove = null;
-
+        private int levelSize = 4;
         private Stopwatch stopWatch;
-
         readonly TimeSpan TargetElapsedTime = TimeSpan.FromTicks(TimeSpan.TicksPerSecond / 120);
         readonly TimeSpan MaxElapsedTime = TimeSpan.FromTicks(TimeSpan.TicksPerSecond / 10);
         private TimeSpan lastTime;
 
         // random number generator used for alls random processes in the game
         internal static Random RNG = new Random();
+        private bool enterDown;
 
         #endregion // Class Member
 
@@ -39,20 +42,31 @@ namespace DosDungeon.Controller
             this.view = new NaiveView(gf);
             this.stopWatch = sw;
             this.player = new Player("Hans");
-            
+
+            InitLevel(this.levelSize);
+        }
+        #endregion // Constructor
+
+        #region Methods
+
+        #region InitLevel
+        /// <summary>
+        /// Initializes a level of the specified size
+        /// </summary>
+        /// <param name="levelSize">The size of the level to init</param>
+        private void InitLevel(int levelSize)
+        {
             // generate first level
-            this.level = Level.GenerateLevel(16);
+            this.level = Level.GenerateLevel(this.levelSize);
             int startX = level.Start.X;
             int startY = level.Start.Y;
 
             // set player on the current board
             Position m = new Position(startX, startY);
             this.player.Move(m);
-            this.level.SetPlayerPos(this.player.PosX, this.player.PosY);
+            this.level.SetPlayerPos(this.player.Position);
         }
-        #endregion // Constructor
-
-        #region Methods
+        #endregion // InitLevel
 
         #region Update
         /// <summary>
@@ -63,44 +77,65 @@ namespace DosDungeon.Controller
         /// <param name="e">The Eventarguments</param>
         internal void Update(object sender, EventArgs e)
         {
-            if (this.state == GameState.Running)
-            {
-                TimeSpan currentTime = stopWatch.Elapsed;
-                TimeSpan elapsedTime = currentTime - lastTime;
+            TimeSpan currentTime = stopWatch.Elapsed;
+            TimeSpan elapsedTime = currentTime - lastTime;
 
-                // only update after 0.5 seconds
-                if (elapsedTime > TimeSpan.FromSeconds(0.3))
+            // only update after 0.5 seconds
+            if (elapsedTime > TimeSpan.FromSeconds(0.3))
+            {
+                lastTime = currentTime;
+
+                if (this.state == GameState.Running)
                 {
-                    lastTime = currentTime;
                     // update data
                     UpdateModels();
 
                     // update view
-                    view.Update(this.level);
+                    this.view.Update(this.level);
+
+                    // check whether the player finished
+                    if (this.level.End.X == this.player.Position.X
+                        && this.level.End.Y == this.player.Position.Y)
+                    {
+                        this.state = GameState.LevelFinished;
+                        this.level.IsFinished = true;
+                    }
                 }
-                else
-                {
-                    // register a move to be executed in the next update
-                    RegisterMove();
+                else if (this.state == GameState.LevelFinished)
+                {                    
+                    if (this.enterDown)
+                    {
+                        this.enterDown = false;
+                        InitLevel(this.levelSize);
+                        this.state = GameState.Running;
+                    }
+                    this.view.Update(this.level);
                 }
+            }
+            else
+            {
+                // register currently pressed keys only
+                RegisterKeyDown();
             }
 
         }
         #endregion // Update
 
-        #region RegisterMove
+        #region RegisterKeyDown
         /// <summary>
         /// Register a move to be executed during the next update
         /// </summary>
-        private void RegisterMove()
+        private void RegisterKeyDown()
         {
+            this.enterDown = Keyboard.IsKeyDown(Key.Enter);
+
             Position m = GetMove(this.player);
-            if(m != null && IsValidMove(m, this.level))
+            if (m != null && IsValidMove(m, this.level))
             {
                 this.nextMove = m;
             }
         }
-        #endregion // RegisterMove
+        #endregion // RegisterKeyDown
 
         #region UpdateModels
         /// <summary>
@@ -108,7 +143,7 @@ namespace DosDungeon.Controller
         /// </summary>
         private void UpdateModels()
         {
-            MovePlayer();            
+            MovePlayer();
         }
         #endregion // UpdateModels
 
@@ -133,7 +168,7 @@ namespace DosDungeon.Controller
                     MakeMove(m, this.player, this.level);
                 }
             }
-        } 
+        }
         #endregion // MovePlayer
 
         #region IsValidMove
@@ -164,7 +199,7 @@ namespace DosDungeon.Controller
         private void MakeMove(Position m, Player p, Level l)
         {
             p.Move(m);
-            l.SetPlayerPos(p.PosX, p.PosY);
+            l.SetPlayerPos(p.Position);
         }
         #endregion // MakeMove
 
@@ -177,25 +212,28 @@ namespace DosDungeon.Controller
         /// <returns></returns>
         private Position GetMove(Player p)
         {
+            int x = p.Position.X;
+            int y = p.Position.Y;
+
             if (Keyboard.IsKeyDown(Key.Left))
             {
 
-                return new Position(p.PosX, p.PosY - 1);
+                return new Position(x, y - 1);
             }
             else if (Keyboard.IsKeyDown(Key.Right))
             {
 
-                return new Position(p.PosX, p.PosY + 1);
+                return new Position(x, y + 1);
             }
             else if (Keyboard.IsKeyDown(Key.Up))
             {
 
-                return new Position(p.PosX - 1, p.PosY);
+                return new Position(x - 1, y);
             }
             else if (Keyboard.IsKeyDown(Key.Down))
             {
 
-                return new Position(p.PosX + 1, p.PosY);
+                return new Position(x + 1, y);
             }
             return null;
         }

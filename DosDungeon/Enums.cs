@@ -9,7 +9,8 @@ namespace DosDungeon
     internal enum GameState
     {
         Pause,
-        Running
+        Running,
+        LevelFinished
     }
 
     internal enum Field

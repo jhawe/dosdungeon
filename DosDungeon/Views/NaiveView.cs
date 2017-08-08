@@ -28,32 +28,40 @@ namespace DosDungeon.Views
         {
             GameForm gf = this.gameForm;
             gf.Board.Clear();
-
             // 'redraw'
             StringBuilder sb = new StringBuilder();
-            // upper border
-            var b = new char[level.Size+2];
-            for (int i = 0; i < b.Length; i++) b[i] = BORDER;
-            sb.AppendLine(new string(b));
 
-            // board
-            for(int i = 0; i < level.Size; i++)
+            // show summary screen of level
+            if (level.IsFinished)
             {
-                var line = new char[level.Size+2];
-                line[0] = BORDER;
-                line[line.Length - 1] = BORDER;
-                for(int j = 0; j < level.Size; j++)
-                {
-                    Field f = level.GetField(i, j);
-                    var fc = GetFieldChar(f);
-                    line[j + 1] = fc;                    
-                }
-                sb.AppendLine(new string(line));
+                sb.AppendLine("Congratulations! You finished the level!");
+                sb.AppendLine("Press [ENTER] to load the next level.");
             }
+            else
+            {
+                // upper border
+                var b = new char[level.Size + 2];
+                for (int i = 0; i < b.Length; i++) b[i] = BORDER;
+                sb.AppendLine(new string(b));
 
-            // lower boarder
-            sb.AppendLine(new string(b));
+                // board
+                for (int i = 0; i < level.Size; i++)
+                {
+                    var line = new char[level.Size + 2];
+                    line[0] = BORDER;
+                    line[line.Length - 1] = BORDER;
+                    for (int j = 0; j < level.Size; j++)
+                    {
+                        Field f = level.GetField(i, j);
+                        var fc = GetFieldChar(f);
+                        line[j + 1] = fc;
+                    }
+                    sb.AppendLine(new string(line));
+                }
 
+                // lower boarder
+                sb.AppendLine(new string(b));
+            }
             gf.Board.Text = sb.ToString();
         }
         #endregion // Update

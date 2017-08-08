@@ -18,11 +18,10 @@ namespace DosDungeon.Models
         int[,] field;
         private Position start;
         private Position end;
-        private int playerX = -1;
-        private int playerY = -1;
+        private Position playerPos;
         private LinkedList<Position> mainPath;
         private List<LinkedList<Position>> branches;
-        private int previous;
+        private int playerField;
         #endregion // Class Member
 
         #region Constructor
@@ -84,6 +83,8 @@ namespace DosDungeon.Models
             }
         }
 
+        public bool IsFinished { get; internal set; }
+
         #endregion // Properties
 
         #region Methods
@@ -103,21 +104,37 @@ namespace DosDungeon.Models
             }
             else
             {
-                GenerateStartEnd(l);
                 GeneratePath(l);
                 GenerateBranches(l);
             }
 
             return (l);
         }
+        #endregion // GenerateLevel
 
+        #region GenerateBranches
+        /// <summary>
+        /// Generates random branches away from the main path of
+        /// a level
+        /// </summary>
+        /// <param name="l">The level for which to generate the 
+        /// branches</param>
         private static void GenerateBranches(Level l)
         {
 
         }
+        #endregion // GenerateBranches
 
+        #region GeneratePath
+        /// <summary>
+        /// Generates the main path through a level.        
+        /// </summary>
+        /// <param name="l">The level for which to generate the path</param>
         private static void GeneratePath(Level l)
         {
+            // generate start and end positions
+            GenerateStartEnd(l);
+
             // generate a path from start to end in the level
             // direction of path is random (choosing from the
             // possible directions in which to go), however it is always
@@ -205,16 +222,25 @@ namespace DosDungeon.Models
                 }
             }
         }
+        #endregion // GeneratePath
 
         #region GetDistances
-        private static float[] GetDistances(int endX, int endY, List<Position> pmoves)
+        /// <summary>
+        /// Get the distances of all positions in a list to the given x and y coordinates
+        /// </summary>
+        /// <param name="x">The target x position</param>
+        /// <param name="y">The target y position</param>
+        /// <param name="positions">The positions for which to check the 
+        /// distances</param>
+        /// <returns>A vector of distances betwenn the (x,y) and positions arguments</returns>
+        private static float[] GetDistances(int x, int y, List<Position> positions)
         {
-            float[] result = new float[pmoves.Count];
+            float[] result = new float[positions.Count];
             for (int i = 0; i < result.Length; i++)
             {
-                Position m = pmoves[i];
-                float dx = endX - m.X;
-                float dy = endY - m.Y;
+                Position m = positions[i];
+                float dx = x - m.X;
+                float dy = y - m.Y;
 
                 // euclidian distance
                 result[i] = (float)Math.Sqrt(dx * dx + dy * dy);
@@ -243,13 +269,13 @@ namespace DosDungeon.Models
             List<Position> result = new List<Position>();
 
             // check whether the next move would be the end position
-            if (Math.Abs(l.End.X-x)==1 && Math.Abs(l.End.Y-y)==0
+            if (Math.Abs(l.End.X - x) == 1 && Math.Abs(l.End.Y - y) == 0
                 || Math.Abs(l.End.X - x) == 0 && Math.Abs(l.End.Y - y) == 1)
             {
                 result.Add(new Position(l.End.X, l.end.Y));
                 return result;
             }
-            
+
             // bottom
             int x1 = x + 1;
             int y1 = y;
@@ -264,7 +290,7 @@ namespace DosDungeon.Models
             x1 = x - 1;
             y1 = y;
             f = l.GetField(x1, y1);
-            if (f != Field.Main && f != Field.NA 
+            if (f != Field.Main && f != Field.NA
                 && IsMoveTowardsEnd(l, x, y, x1, y1))
             {
                 result.Add(new Position(x1, y1));
@@ -274,7 +300,7 @@ namespace DosDungeon.Models
             x1 = x;
             y1 = y - 1;
             f = l.GetField(x1, y1);
-            if (f != Field.Main && f != Field.NA 
+            if (f != Field.Main && f != Field.NA
                 && IsMoveTowardsEnd(l, x, y, x1, y1))
             {
                 result.Add(new Position(x1, y1));
@@ -284,7 +310,7 @@ namespace DosDungeon.Models
             x1 = x;
             y1 = y + 1;
             f = l.GetField(x1, y1);
-            if (f != Field.Main && f != Field.NA 
+            if (f != Field.Main && f != Field.NA
                 && IsMoveTowardsEnd(l, x, y, x1, y1))
             {
                 result.Add(new Position(x1, y1));
@@ -294,12 +320,29 @@ namespace DosDungeon.Models
         }
         #endregion // GetPossibleDirections
 
-        private static bool IsMoveTowardsEnd(Level l, int x, int y, int x1, int y1)
+        #region IsMoveTowardsEnd
+        /// <summary>
+        /// Checks whether a move is directed towards the end field of a level
+        /// based on the previous position and the next position
+        /// </summary>
+        /// <param name="l">The level</param>
+        /// <param name="xp">Previous x</param>
+        /// <param name="yp">Previous y</param>
+        /// <param name="xn">Next x</param>
+        /// <param name="yn">Next y</param>
+        /// <returns></returns>
+        private static bool IsMoveTowardsEnd(Level l, int xp, int yp, int xn, int yn)
         {
-            return (Math.Abs(x1 - l.End.X) < Math.Abs(x - l.End.X) ||
-                Math.Abs(y1 - l.End.Y) < Math.Abs(y - l.End.Y));
-        }
+            return (Math.Abs(xn - l.End.X) < Math.Abs(xp - l.End.X) ||
+                Math.Abs(yn - l.End.Y) < Math.Abs(yp - l.End.Y));
+        } 
+        #endregion // IsMoveTowardsEnd
 
+        #region GenerateStartEnd
+        /// <summary>
+        /// Generates random start and end positions for a level
+        /// </summary>
+        /// <param name="l">The level for which to generate start and end</param>
         private static void GenerateStartEnd(Level l)
         {
             int startX = -1;
@@ -362,21 +405,39 @@ namespace DosDungeon.Models
             // set positions to level instance
             l.SetStart(new Position(startX, startY));
             l.SetEnd(new Position(endX, endY));
-        }
+        } 
+        #endregion // GenerateStartEnd
 
+        #region SetEnd
+        /// <summary>
+        /// Sets the level's end position
+        /// </summary>
+        /// <param name="position">The position to be set</param>
         private void SetEnd(Position position)
         {
             this.end = position;
             this.field[this.end.X, this.end.Y] = (int)Field.Main;
-        }
+        } 
+        #endregion // SetEnd
 
+        #region SetStart
+        /// <summary>
+        /// Sets the level's start position
+        /// </summary>
+        /// <param name="position">the position to be set</param>
         private void SetStart(Position position)
         {
             this.start = position;
             this.field[this.start.X, this.start.Y] = (int)Field.Main;
             this.mainPath.AddLast(position);
-        }
+        } 
+        #endregion // SetStart
 
+        #region GenerateNaive
+        /// <summary>
+        /// Generates a very naive level for testing purposes
+        /// </summary>
+        /// <param name="l"></param>
         private static void GenerateNaive(Level l)
         {
             int size = l.size;
@@ -408,9 +469,8 @@ namespace DosDungeon.Models
             l.SetStart(new Position(15, 0));
             // set end position
             l.SetStart(new Position(0, 0));
-        }
-
-        #endregion // GenerateLevel
+        } 
+        #endregion // GenerateNaive
 
         #region GetField
         /// <summary>
@@ -442,23 +502,21 @@ namespace DosDungeon.Models
         /// <summary>
         /// Sets the position of the player to the current field
         /// </summary>
-        /// <param name="x">X pos</param>
-        /// <param name="y">Y pos</param>
-        internal void SetPlayerPos(int x, int y)
-        {            
+        /// <param name="pos">The position of the player to
+        /// be set</param>
+        internal void SetPlayerPos(Position pos)
+        {
             // reset previous player field to be free again
-            if (this.playerX != -1)
+            if (this.playerPos != null)
             {
-                this.field[this.playerX, this.playerY] = this.previous;
+                this.field[this.playerPos.X, this.playerPos.Y] = this.playerField;
             }
-            this.previous = this.field[x, y];
-            this.field[x, y] = (int)Field.Player;
-            this.playerX = x;
-            this.playerY = y;            
+            this.playerField = this.field[pos.X, pos.Y];
+            this.field[pos.X, pos.Y] = (int)Field.Player;
+            this.playerPos = pos;
         }
         #endregion // SetPlayerPos
 
         #endregion // Methods
-
     }
 }

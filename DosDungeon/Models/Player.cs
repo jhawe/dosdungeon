@@ -11,11 +11,10 @@ namespace DosDungeon.Models
         #region Class Member
         /// <summary>
         /// Class Member
-        /// </summary>
-        int posX; // current x position on field
-        int posY; // current x position on field
+        /// </summary>        
         string name; // the player's name
         int health;
+        private Position position;
         #endregion // Class Member
 
         #region Constructor
@@ -31,26 +30,17 @@ namespace DosDungeon.Models
         }
         #endregion // Constructor
         
-        internal int PosX
+        internal Position Position
         {
             get
             {
-                return this.posX;
-            }
-        }
-
-        internal int PosY
-        {
-            get
-            {
-                return this.posY;
+                return this.position;
             }
         }
 
         internal void Move(Position m)
         {
-            this.posX = m.X;
-            this.posY = m.Y;
+            this.position = m;
         }
     }
 }
