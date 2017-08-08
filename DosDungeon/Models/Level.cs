@@ -95,7 +95,7 @@ namespace DosDungeon.Models
         /// </summary>
         /// <param name="size">the size of the level to generate (square)</param>
         /// <returns>A new level instance</returns>
-        internal static Level GenerateLevel(int size = 16)
+        internal static Level GenerateLevel(int size = 32)
         {
             Level l = new Level(size);
             if (false)
@@ -106,6 +106,7 @@ namespace DosDungeon.Models
             {
                 GeneratePath(l);
                 GenerateBranches(l);
+                PopulateTreasures(l);
             }
 
             return (l);
@@ -121,9 +122,175 @@ namespace DosDungeon.Models
         /// branches</param>
         private static void GenerateBranches(Level l)
         {
+            // iterate over all positions of the main 
+            // path
+            var main = l.mainPath;
+            var ml = main.Count;
+            foreach (Position p in main)
+            {
+                // define a chance to get a branch dependent on the
+                // main path's length
 
+                // gets higher the longer the path
+                var c = (1 - (1.0 / ml)) * 0.5;
+                var r = Game.RNG.NextDouble();
+                if (c < r)
+                {
+                    GrowBranch(l, p);
+                }
+            }
         }
         #endregion // GenerateBranches
+
+        #region GrowBranch
+        /// <summary>
+        /// Creates a branch for the given level and given start position
+        /// </summary>
+        /// <param name="l">The level for which to create the branching</param>
+        /// <param name="p">The startposition of the branching</param>
+        private static void GrowBranch(Level l, Position p)
+        {
+            LinkedList<Position> b = new LinkedList<Position>();
+            Position current = p;
+
+            bool proceed = true;
+            while (proceed)
+            {
+                // 1% chance to just stop where we are
+                // if we walked at least 3 fields
+                var r = Game.RNG.NextDouble();
+                if(r < 0.01 && b.Count >= 3)
+                {
+                    break;
+                }
+
+                // get fields ignoreing that it should got towards the end position
+                var pfields = GetPossibleDirections(l, current, true);
+
+                // first check whether we are back to the main path
+                Position rm = null;
+                foreach (Position pos in pfields)
+                {
+                    if (l.GetField(pos.X, pos.Y) == Field.Main)
+                    {
+                        // at least a branch length of 3 is required
+                        // to get a 33% chance of merging
+                        if (b.Count >= 3)
+                        {
+                            r = Game.RNG.NextDouble();
+                            if (r <= 0.33)
+                            {
+                                proceed = false;
+                            }
+                            else
+                            {
+                                rm = pos;
+                            }
+                        }
+                    }
+                    else if (l.IsEdgeField(pos))
+                    {
+                        // if we reached an edge, we have a 50% chance to stop here
+                        r = Game.RNG.NextDouble();
+                        if (r <= 0.5)
+                        {
+                            b.AddLast(pos);
+                            proceed = false;
+                        }
+                    } else if(pos.X == current.X && pos.Y == current.Y)
+                    {
+                        rm = pos;
+                    }
+                }
+                if (proceed)
+                {
+                    if (rm != null)
+                    {
+                        pfields.Remove(rm);
+                    }
+                    // choose a field by equal chance                                        
+                    r = Game.RNG.NextDouble();
+                    Position chosen = null;
+                    // each gets the same probability
+                    for (int i = 0; i < pfields.Count; i++)
+                    {
+                        // just devide by total possible moves
+                        // and 'weight' by current position
+                        var c = 1.0f / pfields.Count * (i + 1);
+                        if (r < c)
+                        {
+                            // choose the current position
+                            chosen = pfields[i];
+                            break;
+                        }
+                    }
+                    b.AddLast(chosen);
+                    current = chosen;
+                }
+            }
+            l.AddBranch(b);
+        }
+        #endregion // GrowBranch
+
+
+        #region PopulateTreasures
+        /// <summary>
+        /// Randomly generates some treasure chests in the level,
+        /// only on branch end positions though
+        /// </summary>
+        /// <param name="l">The level for which to generate treasures</param>
+        private static void PopulateTreasures(Level l)
+        {
+            var b = l.branches;
+            foreach(var branch in b)
+            {
+                Position last = branch.Last.Value;
+                // just get a 30% chance to add a treausre chest
+                // if we found a edge field
+                var r = Game.RNG.NextDouble();
+                if (r < 0.3 && l.IsEdgeField(last))
+                {
+                    l.field[last.X, last.Y] = (int)Field.Treasure;
+                }
+            }
+        }
+        #endregion // PopulateTreasures
+
+        #region IsEdgeField
+        /// <summary>
+        /// Checks whether a certian position is
+        /// on the edge of the level
+        /// </summary>
+        /// <param name="pos"></param>
+        /// <returns></returns>
+        private bool IsEdgeField(Position pos)
+        {
+            // check if we are at the boundaries            
+            int x = pos.X;
+            int y = pos.Y;
+            if (x == 0 || x == this.size - 1
+                || y == 0 || y == this.size - 1)
+            {
+                return (true);
+            }
+            return (false);
+        }
+        #endregion // IsEdgeField       
+
+        #region AddBranch
+        /// <summary>
+        /// Adds a generated branch to the level
+        /// </summary>
+        /// <param name="b">The branch to be added</param>
+        private void AddBranch(LinkedList<Position> b)
+        {
+            foreach(var p in b)
+            {
+                this.field[p.X, p.Y] = (int)Field.Branch;
+            }
+            this.branches.Add(b);
+        } 
+        #endregion // AddBranch
 
         #region GeneratePath
         /// <summary>
@@ -257,7 +424,7 @@ namespace DosDungeon.Models
         /// <param name="x">The current x position</param>
         /// <param name="y">The current y position</param>
         /// <returns>A list of moves to which a path could be extended</returns>
-        private static List<Position> GetPossibleDirections(Level l, Position pos)
+        private static List<Position> GetPossibleDirections(Level l, Position pos, bool ignoreEnd = false)
         {
             // generate a Position for each possible direction
             // only be able to Position to "blocked" fields (default field setting)
@@ -282,7 +449,7 @@ namespace DosDungeon.Models
             Field f = l.GetField(x1, y1);
 
             if (f != Field.Main && f != Field.NA
-                && IsMoveTowardsEnd(l, x, y, x1, y1))
+                && (IsMoveTowardsEnd(l, x, y, x1, y1) | ignoreEnd))
             {
                 result.Add(new Position(x1, y1));
             }
@@ -291,7 +458,7 @@ namespace DosDungeon.Models
             y1 = y;
             f = l.GetField(x1, y1);
             if (f != Field.Main && f != Field.NA
-                && IsMoveTowardsEnd(l, x, y, x1, y1))
+                && (IsMoveTowardsEnd(l, x, y, x1, y1) | ignoreEnd))
             {
                 result.Add(new Position(x1, y1));
             }
@@ -301,7 +468,7 @@ namespace DosDungeon.Models
             y1 = y - 1;
             f = l.GetField(x1, y1);
             if (f != Field.Main && f != Field.NA
-                && IsMoveTowardsEnd(l, x, y, x1, y1))
+                && (IsMoveTowardsEnd(l, x, y, x1, y1) | ignoreEnd))
             {
                 result.Add(new Position(x1, y1));
             }
@@ -311,7 +478,7 @@ namespace DosDungeon.Models
             y1 = y + 1;
             f = l.GetField(x1, y1);
             if (f != Field.Main && f != Field.NA
-                && IsMoveTowardsEnd(l, x, y, x1, y1))
+                && (IsMoveTowardsEnd(l, x, y, x1, y1) | ignoreEnd))
             {
                 result.Add(new Position(x1, y1));
             }
@@ -335,7 +502,7 @@ namespace DosDungeon.Models
         {
             return (Math.Abs(xn - l.End.X) < Math.Abs(xp - l.End.X) ||
                 Math.Abs(yn - l.End.Y) < Math.Abs(yp - l.End.Y));
-        } 
+        }
         #endregion // IsMoveTowardsEnd
 
         #region GenerateStartEnd
@@ -405,7 +572,7 @@ namespace DosDungeon.Models
             // set positions to level instance
             l.SetStart(new Position(startX, startY));
             l.SetEnd(new Position(endX, endY));
-        } 
+        }
         #endregion // GenerateStartEnd
 
         #region SetEnd
@@ -417,7 +584,7 @@ namespace DosDungeon.Models
         {
             this.end = position;
             this.field[this.end.X, this.end.Y] = (int)Field.Main;
-        } 
+        }
         #endregion // SetEnd
 
         #region SetStart
@@ -430,7 +597,7 @@ namespace DosDungeon.Models
             this.start = position;
             this.field[this.start.X, this.start.Y] = (int)Field.Main;
             this.mainPath.AddLast(position);
-        } 
+        }
         #endregion // SetStart
 
         #region GenerateNaive
@@ -469,7 +636,7 @@ namespace DosDungeon.Models
             l.SetStart(new Position(15, 0));
             // set end position
             l.SetStart(new Position(0, 0));
-        } 
+        }
         #endregion // GenerateNaive
 
         #region GetField
@@ -514,6 +681,7 @@ namespace DosDungeon.Models
             this.playerField = this.field[pos.X, pos.Y];
             this.field[pos.X, pos.Y] = (int)Field.Player;
             this.playerPos = pos;
+            
         }
         #endregion // SetPlayerPos
 

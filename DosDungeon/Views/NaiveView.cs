@@ -11,6 +11,9 @@ namespace DosDungeon.Views
         const char MONSTER = 'M';
         const char BLOCKED = 'B';
         const char FREE = ' ';
+        const char END = 'E';
+        const char TREASURE = 'T';
+
         private GameForm gameForm = null;
 
         internal NaiveView(GameForm gf)
@@ -52,8 +55,16 @@ namespace DosDungeon.Views
                     line[line.Length - 1] = BORDER;
                     for (int j = 0; j < level.Size; j++)
                     {
-                        Field f = level.GetField(i, j);
-                        var fc = GetFieldChar(f);
+                        var fc = '#';
+                        if (i == level.End.X && j == level.End.Y)
+                        {
+                            fc = END;
+                        }
+                        else
+                        {
+                            Field f = level.GetField(i, j);
+                            fc = GetFieldChar(f);
+                        }
                         line[j + 1] = fc;
                     }
                     sb.AppendLine(new string(line));
@@ -89,6 +100,12 @@ namespace DosDungeon.Views
                     break;
                 case Field.Player:
                     fc = PLAYER;
+                    break;
+                case Field.Branch:
+                    fc = FREE;
+                    break;
+                case Field.Treasure:
+                    fc = TREASURE;
                     break;
                 default:
                     break;

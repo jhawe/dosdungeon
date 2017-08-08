@@ -27,8 +27,8 @@ namespace DosDungeon
         Main = 16,
         // a path branched from the main path
         Branch = 32,
-        // heart item to fill up health point
-        Heart = 64,
+        // treasure chest!
+        Treasure = 64,
         NA = 128
     }
 }

@@ -36,7 +36,7 @@
             this.textField.Cursor = System.Windows.Forms.Cursors.No;
             this.textField.Dock = System.Windows.Forms.DockStyle.Fill;
             this.textField.Enabled = false;
-            this.textField.Font = new System.Drawing.Font("Courier New", 8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.textField.Font = new System.Drawing.Font("Courier New", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.textField.Location = new System.Drawing.Point(0, 0);
             this.textField.Name = "textField";
             this.textField.ReadOnly = true;

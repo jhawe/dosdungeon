@@ -18,7 +18,7 @@ namespace DosDungeon.Controller
         private Player player = null;
         private Level level = null;
         private Position nextMove = null;
-        private int levelSize = 4;
+        private int levelSize = 16;
         private Stopwatch stopWatch;
         readonly TimeSpan TargetElapsedTime = TimeSpan.FromTicks(TimeSpan.TicksPerSecond / 120);
         readonly TimeSpan MaxElapsedTime = TimeSpan.FromTicks(TimeSpan.TicksPerSecond / 10);
@@ -199,9 +199,21 @@ namespace DosDungeon.Controller
         private void MakeMove(Position m, Player p, Level l)
         {
             p.Move(m);
+
             l.SetPlayerPos(p.Position);
+
+            // check whether we found a treasure
+            if (l.GetField(p.Position.X, p.Position.Y) == Field.Treasure)
+            {
+                OpenTreasure();                
+            }
         }
         #endregion // MakeMove
+
+        private void OpenTreasure()
+        {
+            throw new NotImplementedException();
+        }
 
         #region GetMove
         /// <summary>
