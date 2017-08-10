@@ -29,11 +29,65 @@ namespace DosDungeon.Common
             {
                 GeneratePath(l);
                 GenerateBranches(l);
+             
                 PopulateTreasures(l);
                 PopulateMonsters(l);
             }
 
             return (l);
+        }
+
+        private static void CheckPath(Level l)
+        {
+            // temp vars to check min dist
+            float minFreeDist = float.MaxValue;
+            Position minDistPos = null;
+
+            // get the free field nearest to the end
+            for (int i = 0; i < l.Size; i++)
+            {
+                for (int j = 0; j < l.Size; j++)
+                {
+
+                    Field f = l.GetField(i, j);
+                    float d = GetDistance(i, j, l.End.X, l.End.Y);
+                    if (l.IsFieldAccessible(i, j) && d < minFreeDist)
+                    {
+                        minFreeDist = d;
+                        minDistPos = new Position(i, j);
+                    }
+                }
+            }
+
+            // already at the end, nothing to do
+            if (minDistPos.X == l.End.X && minDistPos.Y == l.End.Y)
+            {
+                return;
+            }
+            // starting from the mindistposition, finish the path to the 
+            // end position
+            bool proceed = true;
+            Position current = minDistPos;
+            while (proceed)
+            {
+                List<Position> ppos = GetPossibleDirections(l, current);
+                foreach (Position p in ppos)
+                {
+                    if (IsMoveTowardsEnd(l, current.X, current.Y, p.X, p.Y))
+                    {
+                        current = p;
+                        break;
+                    }
+                }
+                if (current.X == l.End.X && current.Y == l.End.Y)
+                {
+                    proceed = false;
+                }
+                else
+                {
+                    l.SetField(current, Field.Free);
+                }
+            }
         }
 
         private static void PopulateMonsters(Level l)
@@ -110,16 +164,16 @@ namespace DosDungeon.Common
             bool proceed = true;
             while (proceed)
             {
-                // 1% chance to just stop where we are
+                // 5% chance to just stop where we are
                 // if we walked at least 3 fields
                 var r = Game.RNG.NextDouble();
-                if (r < 0.01 && b.Count >= 3)
+                if (r < 0.05 && b.Count >= 3)
                 {
                     break;
                 }
 
                 // get fields ignoreing that it should got towards the end position
-                var pfields = GetPossibleDirections(l, current, true);
+                var pfields = GetPossibleDirections(l, current);
 
                 // first check whether we are back to the main path
                 Position rm = null;
@@ -184,7 +238,7 @@ namespace DosDungeon.Common
                 }
             }
             l.AddBranch(b);
-        }      
+        }
         #endregion // GrowBranch
 
         #region PopulateTreasures
@@ -225,15 +279,14 @@ namespace DosDungeon.Common
             // possible directions in which to go), however it is always
             // slightly attracted to the end position in the level
 
-            int currentX = l.Start.X;
-            int currentY = l.Start.Y;
+            Position current = new Position(l.Start.X, l.Start.Y);            
 
             bool proceed = true;
 
             while (proceed)
             {
                 // get possible directions
-                List<Position> pmoves = GetPossibleDirections(l, new Position(currentX, currentY));
+                List<Position> pmoves = GetPossibleDirections(l, current);
 
                 // get distances to end position on the field
                 float[] distances = GetDistances(l.End.X, l.End.Y, pmoves);
@@ -260,52 +313,43 @@ namespace DosDungeon.Common
                     if (r < 0.25) c = pmoves[0];
                     if (r >= 0.25 && r < 0.5) c = pmoves[1];
                     if (r >= 0.5 && r < 0.75) c = pmoves[2];
-                    if (r >= 0.75) c = pmoves[3];
-                    // extra chance for mindistmove
-                    if (Game.RNG.NextDouble() > 0.75)
-                    {
-                        c = pmoves[minDistMoveIdx];
-                    }
+                    if (r >= 0.75) c = pmoves[3];                   
                 }
                 else if (pmoves.Count == 3)
                 {
                     if (r < 0.33) c = pmoves[0];
                     if (r >= 0.33 && r < 0.66) c = pmoves[1];
-                    if (r >= 0.66) c = pmoves[2];
-                    // extra chance for mindistmove
-                    if (Game.RNG.NextDouble() > 0.75)
-                    {
-                        c = pmoves[minDistMoveIdx];
-                    }
+                    if (r >= 0.66) c = pmoves[2];                  
                 }
                 else if (pmoves.Count == 2)
                 {
                     if (r < 0.5) c = pmoves[0];
-                    if (r >= 0.5) c = pmoves[1];
-                    // extra chance for mindistmove
-                    if (Game.RNG.NextDouble() > 0.75)
-                    {
-                        c = pmoves[minDistMoveIdx];
-                    }
+                    if (r >= 0.5) c = pmoves[1];                
                 }
                 else
                 {
                     c = minDistMove;
                 }
+                // extra chance for mindistmove
+                if (Game.RNG.NextDouble() > 0.75)
+                {
+                    c = minDistMove;
+                }
 
                 // set the new field for the main path
-                l.SetField(c.X, c.Y,Field.Main);
-                currentX = c.X;
-                currentY = c.Y;
+                l.SetField(c.X, c.Y, Field.Main);
+                current = c;
                 l.Main.AddLast(c);
 
-                // check whether we arrived at the end
-                if (currentX == l.End.X && currentY == l.End.Y)
+                // check whether we arrived at an edge
+                if (l.IsEdgeField(current) && c.X != l.Start.X && c.Y != l.Start.Y)
                 {
-                    l.Main.AddLast(c);
                     proceed = false;
-                }
+                }               
             }
+            // check whether we have a connected path 
+            // and generate one if necessary
+            CheckPath(l);
         }
         #endregion // GeneratePath
 
@@ -317,7 +361,7 @@ namespace DosDungeon.Common
         /// <param name="x">The current x position</param>
         /// <param name="y">The current y position</param>
         /// <returns>A list of moves to which a path could be extended</returns>
-        private static List<Position> GetPossibleDirections(Level l, Position pos, bool ignoreEnd = false)
+        private static List<Position> GetPossibleDirections(Level l, Position pos)
         {
             // generate a Position for each possible direction
             // only be able to Position to "blocked" fields (default field setting)
@@ -341,8 +385,7 @@ namespace DosDungeon.Common
             int y1 = y;
             Field f = l.GetField(x1, y1);
 
-            if (f != Field.Main && f != Field.NA
-                && (IsMoveTowardsEnd(l, x, y, x1, y1) | ignoreEnd))
+            if (f != Field.Main && f != Field.NA)
             {
                 result.Add(new Position(x1, y1));
             }
@@ -350,8 +393,7 @@ namespace DosDungeon.Common
             x1 = x - 1;
             y1 = y;
             f = l.GetField(x1, y1);
-            if (f != Field.Main && f != Field.NA
-                && (IsMoveTowardsEnd(l, x, y, x1, y1) | ignoreEnd))
+            if (f != Field.Main && f != Field.NA)
             {
                 result.Add(new Position(x1, y1));
             }
@@ -360,8 +402,7 @@ namespace DosDungeon.Common
             x1 = x;
             y1 = y - 1;
             f = l.GetField(x1, y1);
-            if (f != Field.Main && f != Field.NA
-                && (IsMoveTowardsEnd(l, x, y, x1, y1) | ignoreEnd))
+            if (f != Field.Main && f != Field.NA)
             {
                 result.Add(new Position(x1, y1));
             }
@@ -370,8 +411,7 @@ namespace DosDungeon.Common
             x1 = x;
             y1 = y + 1;
             f = l.GetField(x1, y1);
-            if (f != Field.Main && f != Field.NA
-                && (IsMoveTowardsEnd(l, x, y, x1, y1) | ignoreEnd))
+            if (f != Field.Main && f != Field.NA)
             {
                 result.Add(new Position(x1, y1));
             }
@@ -397,6 +437,24 @@ namespace DosDungeon.Common
                 Math.Abs(yn - l.End.Y) < Math.Abs(yp - l.End.Y));
         }
         #endregion // IsMoveTowardsEnd
+
+        #region IsMoveTowardsStart
+        /// <summary>
+        /// Checks whether a move is directed towards the start field of a level
+        /// based on the previous position and the next position
+        /// </summary>
+        /// <param name="l">The level</param>
+        /// <param name="xp">Previous x</param>
+        /// <param name="yp">Previous y</param>
+        /// <param name="xn">Next x</param>
+        /// <param name="yn">Next y</param>
+        /// <returns></returns>
+        private static bool IsMoveTowardsStart(Level l, int xp, int yp, int xn, int yn)
+        {
+            return (Math.Abs(xn - l.Start.X) < Math.Abs(xp - l.Start.X) ||
+                Math.Abs(yn - l.Start.Y) < Math.Abs(yp - l.Start.Y));
+        }
+        #endregion // IsMoveTowardsStart
 
         #region GenerateStartEnd
         /// <summary>
@@ -483,16 +541,28 @@ namespace DosDungeon.Common
             for (int i = 0; i < result.Length; i++)
             {
                 Position m = positions[i];
-                float dx = x - m.X;
-                float dy = y - m.Y;
 
                 // euclidian distance
-                result[i] = (float)Math.Sqrt(dx * dx + dy * dy);
+                result[i] = GetDistance(x, y, m.X, m.Y);
             }
             return (result);
         }
         #endregion // GetDistances
 
+        #region GetDistance
+        /// <summary>
+        /// Gets euclidean distance between to points
+        /// </summary>
+        /// <returns></returns>
+        private static float GetDistance(int x1, int y1, int x2, int y2)
+        {
+            float dx = x1 - x2;
+            float dy = y1 - y2;
+
+            // euclidian distance
+            return (float)Math.Sqrt(dx * dx + dy * dy);
+        }
+        #endregion // GetDistance
 
         #region GenerateNaive
         /// <summary>
