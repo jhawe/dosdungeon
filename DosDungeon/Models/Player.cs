@@ -69,9 +69,9 @@ namespace DosDungeon.Models
                     case Direction.Down:
                         return new Position(this.position.X + 1, this.position.Y);
                     case Direction.Left:
-                        return new Position(this.position.X, this.position.Y + 1);
-                    case Direction.Right:
                         return new Position(this.position.X, this.position.Y - 1);
+                    case Direction.Right:
+                        return new Position(this.position.X, this.position.Y + 1);
                     case Direction.Up:
                         return new Position(this.position.X - 1, this.position.Y);
                     default:

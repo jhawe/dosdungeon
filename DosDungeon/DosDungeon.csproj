@@ -51,7 +51,8 @@
     <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Enums.cs" />
+    <Compile Include="Common\Enums.cs" />
+    <Compile Include="Common\LevelGenerator.cs" />
     <Compile Include="Controller\Game.cs" />
     <Compile Include="GameForm.cs">
       <SubType>Form</SubType>

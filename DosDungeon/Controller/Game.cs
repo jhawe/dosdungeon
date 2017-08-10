@@ -1,4 +1,5 @@
-﻿using DosDungeon.Models;
+﻿using DosDungeon.Common;
+using DosDungeon.Models;
 using DosDungeon.Views;
 using System;
 using System.Diagnostics;
@@ -58,7 +59,7 @@ namespace DosDungeon.Controller
         private void InitLevel(int levelSize)
         {
             // generate first level
-            this.level = Level.GenerateLevel(this.levelSize);
+            this.level = LevelGenerator.GenerateLevel(this.levelSize);
             int startX = level.Start.X;
             int startY = level.Start.Y;
 
@@ -120,7 +121,7 @@ namespace DosDungeon.Controller
             TimeSpan elapsedTime = currentTime - lastTime;
 
             // only update after 0.5 seconds
-            if (elapsedTime > TimeSpan.FromSeconds(0.1))
+            if (elapsedTime > TimeSpan.FromSeconds(0.3))
             {
                 lastTime = currentTime;
 
@@ -142,7 +143,7 @@ namespace DosDungeon.Controller
                 }
                 else if (this.state == GameState.LevelFinished)
                 {
-                    if (this.enterDown)
+                    if (this.enterDown || Keyboard.IsKeyDown(Key.Enter))
                     {
                         this.enterDown = false;
                         InitLevel(this.levelSize);
@@ -169,11 +170,11 @@ namespace DosDungeon.Controller
             this.enterDown = Keyboard.IsKeyDown(Key.Enter);
             this.attackDown = Keyboard.IsKeyDown(Key.Space);
 
-            /*Position m = GetMove(this.player);
+            Position m = GetMove(this.player);
             if (m != null && IsValidMove(m, this.level))
             {
                 this.nextMove = m;
-            }*/
+            }
         }
         #endregion // RegisterKeyDown
 
@@ -186,7 +187,12 @@ namespace DosDungeon.Controller
             PlayerAction();
             MovePlayer();
         }
+        #endregion // UpdateModels
 
+        #region PlayerAction
+        /// <summary>
+        /// Let's the player instance perform an action besides moving
+        /// </summary>
         private void PlayerAction()
         {
             // only current action is to attack
@@ -204,9 +210,8 @@ namespace DosDungeon.Controller
                     this.player.GoldUp(10);
                 }
             }
-        }
-
-        #endregion // UpdateModels
+        } 
+        #endregion // PayerAction
 
         #region MovePlayer
         /// <summary>
@@ -230,6 +235,13 @@ namespace DosDungeon.Controller
                 if (IsValidMove(m, this.level))
                 {
                     MakeMove(m, this.player, this.level);
+                }
+                else
+                {
+                    // not valid, but nevertheless change the
+                    // direction the player is facing
+                    Direction dir = GetMoveDirection(this.player.Position, m);
+                    this.player.SetFace(dir);
                 }
             }
         }
