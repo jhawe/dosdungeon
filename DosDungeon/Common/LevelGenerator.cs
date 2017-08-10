@@ -29,7 +29,7 @@ namespace DosDungeon.Common
             {
                 GeneratePath(l);
                 GenerateBranches(l);
-             
+
                 PopulateTreasures(l);
                 PopulateMonsters(l);
             }
@@ -51,7 +51,10 @@ namespace DosDungeon.Common
 
                     Field f = l.GetField(i, j);
                     float d = GetDistance(i, j, l.End.X, l.End.Y);
-                    if (l.IsFieldAccessible(i, j) && d < minFreeDist)
+                    if (l.IsFieldAccessible(i, j)
+                        && d < minFreeDist
+                        && !(i == l.End.X && j == l.End.Y))
+
                     {
                         minFreeDist = d;
                         minDistPos = new Position(i, j);
@@ -108,8 +111,8 @@ namespace DosDungeon.Common
                             // check whether the field is accessible
                             if (l.IsFieldAccessible(i, j))
                             {
-                                // 5% chance to get a monster
-                                if (Game.RNG.NextDouble() < 0.05)
+                                // 10% chance to get a monster
+                                if (Game.RNG.NextDouble() < 0.1)
                                 {
                                     l.SetField(new Position(i, j), Field.Monster);
                                 }
@@ -279,7 +282,7 @@ namespace DosDungeon.Common
             // possible directions in which to go), however it is always
             // slightly attracted to the end position in the level
 
-            Position current = new Position(l.Start.X, l.Start.Y);            
+            Position current = new Position(l.Start.X, l.Start.Y);
 
             bool proceed = true;
 
@@ -313,18 +316,18 @@ namespace DosDungeon.Common
                     if (r < 0.25) c = pmoves[0];
                     if (r >= 0.25 && r < 0.5) c = pmoves[1];
                     if (r >= 0.5 && r < 0.75) c = pmoves[2];
-                    if (r >= 0.75) c = pmoves[3];                   
+                    if (r >= 0.75) c = pmoves[3];
                 }
                 else if (pmoves.Count == 3)
                 {
                     if (r < 0.33) c = pmoves[0];
                     if (r >= 0.33 && r < 0.66) c = pmoves[1];
-                    if (r >= 0.66) c = pmoves[2];                  
+                    if (r >= 0.66) c = pmoves[2];
                 }
                 else if (pmoves.Count == 2)
                 {
                     if (r < 0.5) c = pmoves[0];
-                    if (r >= 0.5) c = pmoves[1];                
+                    if (r >= 0.5) c = pmoves[1];
                 }
                 else
                 {
@@ -345,7 +348,7 @@ namespace DosDungeon.Common
                 if (l.IsEdgeField(current) && c.X != l.Start.X && c.Y != l.Start.Y)
                 {
                     proceed = false;
-                }               
+                }
             }
             // check whether we have a connected path 
             // and generate one if necessary
