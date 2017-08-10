@@ -1,4 +1,5 @@
 ﻿using DosDungeon.Common;
+using DosDungeon.Interfaces;
 using DosDungeon.Models;
 using DosDungeon.Views;
 using System;
@@ -15,7 +16,7 @@ namespace DosDungeon.Controller
         /// Class member
         /// </summary>
         private GameState state = GameState.Running;
-        private NaiveView view = null;
+        private AView view = null;
         private Player player = null;
         private Level level = null;
         private Position nextMove = null;
@@ -40,12 +41,20 @@ namespace DosDungeon.Controller
         /// <param name="sw">The timer stopwatch</param>
         internal Game(GameForm gf, Stopwatch sw)
         {
-            // initialize game variables
-            this.view = new NaiveView(gf);
             this.stopWatch = sw;
             this.player = new Player("Hans");
 
             InitLevel(this.levelSize);
+
+            // initialize game variables
+            if (false)
+            {
+                this.view = NaiveView.Create(gf, this.level);
+            }
+            else
+            {
+                this.view = GraphicalView.Create(gf, this.level);
+            }
         }
         #endregion // Constructor
 
@@ -131,7 +140,7 @@ namespace DosDungeon.Controller
                     UpdateModels();
 
                     // update view
-                    this.view.Update(this.level, this.player);
+                    this.view.Update(this.player);
 
                     // check whether the player finished
                     if (this.level.End.X == this.player.Position.X
@@ -149,7 +158,7 @@ namespace DosDungeon.Controller
                         InitLevel(this.levelSize);
                         this.state = GameState.Running;
                     }
-                    this.view.Update(this.level, this.player);
+                    this.view.Update(this.player);
                 }
             }
             else
@@ -157,7 +166,6 @@ namespace DosDungeon.Controller
                 // register currently pressed keys only
                 RegisterKeyDown();
             }
-
         }
         #endregion // Update
 

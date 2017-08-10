@@ -32,7 +32,7 @@ namespace DosDungeon
             timer = new Timer();
             timer.Interval = (int)TargetElapsedTime.TotalMilliseconds;
             timer.Tick += this.game.Update;
-            timer.Start();
+            timer.Start();            
         }
 
         internal RichTextBox Board
@@ -41,6 +41,6 @@ namespace DosDungeon
             {
                 return this.textField;
             }
-        }
+        }     
     }
 }
