@@ -39,7 +39,7 @@ namespace DosDungeon.Common
         }
         #endregion // GenerateLevel
 
-        private static void CheckPath(Level l)
+        private static void CheckPath(Level l, bool generate = false)
         {
             // temp vars to check min dist
             float minFreeDist = float.MaxValue;
@@ -71,7 +71,7 @@ namespace DosDungeon.Common
             }
             // starting from the mindistposition, finish the path to the 
             // end position
-            bool proceed = true;
+            bool proceed = generate;
             Position current = minDistPos;
             while (proceed)
             {
@@ -113,8 +113,8 @@ namespace DosDungeon.Common
                             // check whether the field is accessible
                             if (l.IsFieldAccessible(i, j))
                             {
-                                // 10% chance to get a monster
-                                if (Game.RNG.NextDouble() < 0.1)
+                                // 5% chance to get a monster
+                                if (Game.RNG.NextDouble() < 0.05)
                                 {
                                     l.SetField(new Position(i, j), Field.Monster);
                                 }
@@ -171,9 +171,9 @@ namespace DosDungeon.Common
             while (proceed)
             {
                 // 5% chance to just stop where we are
-                // if we walked at least 3 fields
+                // if we walked at least l.size/2 fields
                 var r = Game.RNG.NextDouble();
-                if (r < 0.05 && b.Count >= 3)
+                if (r < 0.05 && b.Count >= l.Size/2 && l.IsEdgeField(current))
                 {
                     proceed = false;
                 }
@@ -280,10 +280,10 @@ namespace DosDungeon.Common
             foreach (var branch in b)
             {
                 Position last = branch.Last.Value;
-                // just get a 30% chance to add a treausre chest
+                // just get a 40% chance to add a treausre chest
                 // if we found a edge field
                 var r = Game.RNG.NextDouble();
-                if (r < 0.3 && l.IsEdgeField(last))
+                if (r < 0.4 && l.IsEdgeField(last))
                 {
                     l.SetField(last.X, last.Y, Field.Treasure);
                 }
@@ -323,7 +323,7 @@ namespace DosDungeon.Common
                 int minDistMoveIdx = GetMinDistMove(l.End, pmoves);
 
                 // choose a random move
-                current = ChooseMove(pmoves, minDistMoveIdx);
+                current = ChooseMove(l, pmoves, minDistMoveIdx);
 
                 // set the new field for the main path
                 l.SetField(current, Field.Main);
@@ -331,19 +331,17 @@ namespace DosDungeon.Common
 
                 // check whether we arrived at an edge
                 if (l.End.X == current.X && l.End.Y == current.Y)
-                //.IsEdgeField(current) && 
-                //current.X != l.Start.X && current.Y != l.Start.Y)
                 {
                     proceed = false;
                 }
             }
             // check whether we have a connected path 
             // and generate one if necessary
-            CheckPath(l);
+            CheckPath(l, true);
         }
         #endregion // GeneratePath
 
-        private static Position ChooseMove(List<Position> pmoves, int minDistMoveIdx)
+        private static Position ChooseMove(Level level, List<Position> pmoves, int minDistMoveIdx)
         {
             // TODO make a random choice, slightly favored to the 
             // minDistMove
@@ -370,12 +368,45 @@ namespace DosDungeon.Common
             }
             else
             {
-                c = minDistMove;
+                c = pmoves[0];
+            }
+            // extra chance for moves with only one neighbouring 
+            // free field
+            foreach (Position m in pmoves)
+            {
+                int nfree = CountNeighbourAccessFields(level, m);
+                if (nfree < 2 && Game.RNG.NextDouble() < 0.5)
+                {
+                    c = m;
+                    break;
+                }
             }
             // extra chance for mindistmove
             if (Game.RNG.NextDouble() < 0.1)
             {
                 c = minDistMove;
+            }
+            return c;
+        }
+
+        private static int CountNeighbourAccessFields(Level level, Position m)
+        {
+            int c = 0;
+            if (level.IsFieldAccessible(m.X, m.Y - 1))
+            {
+                c++;
+            }
+            if (level.IsFieldAccessible(m.X + 1, m.Y))
+            {
+                c++;
+            }
+            if (level.IsFieldAccessible(m.X - 1, m.Y))
+            {
+                c++;
+            }
+            if (level.IsFieldAccessible(m.X, m.Y + 1))
+            {
+                c++;
             }
             return c;
         }
