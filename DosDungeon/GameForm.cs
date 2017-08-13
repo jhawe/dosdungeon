@@ -25,22 +25,14 @@ namespace DosDungeon
             InitializeComponent();
         }
 
-
         private void OnFormLoad(object sender, EventArgs e)
         {
-            this.game = new Game(this, stopWatch);
+            this.game = new Game(this, stopWatch);  
+            
             timer = new Timer();
             timer.Interval = (int)TargetElapsedTime.TotalMilliseconds;
             timer.Tick += this.game.Update;
             timer.Start();            
-        }
-
-        internal RichTextBox Board
-        {
-            get
-            {
-                return this.textField;
-            }
-        }     
+        }             
     }
 }

@@ -26,7 +26,7 @@ namespace DosDungeon.Controller
         readonly TimeSpan TargetElapsedTime = TimeSpan.FromTicks(TimeSpan.TicksPerSecond / 120);
         readonly TimeSpan MaxElapsedTime = TimeSpan.FromTicks(TimeSpan.TicksPerSecond / 10);
         private TimeSpan lastTime;
-        private List<Monster> monster; 
+        private List<Monster> monster;
         // random number generator used for alls random processes in the game
         internal static Random RNG = new Random();
         internal static int COUNT_LEVEL = 1;
@@ -49,15 +49,8 @@ namespace DosDungeon.Controller
 
             InitLevel(this.levelSize);
 
-            // initialize game variables
-            if (false)
-            {
-                this.view = NaiveView.Create(gf);
-            }
-            else
-            {
-                this.view = GraphicalView.Create(gf);
-            }
+            // initialize game view            
+            this.view = GraphicalView.Create(gf);           
         }
         #endregion // Constructor
 
@@ -69,7 +62,7 @@ namespace DosDungeon.Controller
         /// </summary>
         /// <param name="levelSize">The size of the level to init</param>
         private void InitLevel(int levelSize)
-        {            
+        {
             // generate first level
             this.level = LevelGenerator.GenerateLevel(this.levelSize);
             int startX = level.Start.X;
@@ -161,7 +154,7 @@ namespace DosDungeon.Controller
                         && this.level.End.Y == this.player.Position.Y)
                     {
                         this.state = GameState.LevelFinished;
-                        this.level.IsFinished = true;
+                        this.level.State = GameState.LevelFinished;
                     }
                 }
                 else if (this.state == GameState.LevelFinished)
@@ -171,16 +164,31 @@ namespace DosDungeon.Controller
                         this.enterDown = false;
                         InitLevel(this.levelSize);
                         this.state = GameState.Running;
+                        this.level.State = GameState.Running;
                         COUNT_LEVEL++;
+                    }
+                    this.view.Update(this.level, this.player);
+                }
+                else if (this.state == GameState.GameOver)
+                {
+                    if (this.enterDown || Keyboard.IsKeyDown(Key.Enter))
+                    {
+                        COUNT_LEVEL = 1;
+                        this.enterDown = false;
+                        InitLevel(this.levelSize);
+                        this.state = GameState.Running;
+                        this.level.State = this.state;
                     }
                     this.view.Update(this.level, this.player);
                 }
             }
             else
             {
+                //this.view.Update(this.level, this.player);
                 // register currently pressed keys only
                 RegisterKeyDown();
             }
+            
         }
         #endregion // Update
 
@@ -207,7 +215,7 @@ namespace DosDungeon.Controller
         /// </summary>
         private void UpdateModels()
         {
-            PlayerAction();            
+            PlayerAction();
             MoveMonster();
         }
         #endregion // UpdateModels
@@ -233,7 +241,7 @@ namespace DosDungeon.Controller
                 // should only very rarely be the case
                 if (lp.Count < 1)
                 {
-                   // do nothing continue
+                    // do nothing continue
                 }
                 if (Game.RNG.NextDouble() <= 0.2)
                 {
@@ -257,7 +265,7 @@ namespace DosDungeon.Controller
                     }
                 }
             }
-        } 
+        }
         #endregion // MoveMonster
 
         #region AttackPlayer
@@ -273,6 +281,11 @@ namespace DosDungeon.Controller
                 // just reduce health
                 // TODO adjust amount by level/strength of monster?
                 this.player.HealthDown(1);
+                if(this.player.Health == 0)
+                {
+                    this.state = GameState.GameOver;
+                    this.level.State = GameState.GameOver;
+                }
             }
         }
         #endregion // AttackPlayer
@@ -295,7 +308,7 @@ namespace DosDungeon.Controller
                 {
                     // check whether attack field and the current monster
                     // position overlap
-                    if(af.X == m.Position.X && af.Y == m.Position.Y)
+                    if (af.X == m.Position.X && af.Y == m.Position.Y)
                     {
                         // remove monster from our list
                         rm = m;
@@ -306,16 +319,16 @@ namespace DosDungeon.Controller
                         break;
                     }
                 }
-                if(rm != null)
+                if (rm != null)
                 {
                     this.monster.Remove(rm);
-                }                
+                }
             }
             else
             {
                 MovePlayer();
             }
-        } 
+        }
         #endregion // PayerAction
 
         #region MovePlayer
@@ -360,7 +373,7 @@ namespace DosDungeon.Controller
         /// <param name="l">The current level</param>
         /// <returns>True if move is valid, otherwise false</returns>
         private bool IsValidMove(Position m, Level l)
-        {            
+        {
             if (l.IsFieldAccessible(m.X, m.Y))
             {
                 return true;
@@ -394,7 +407,7 @@ namespace DosDungeon.Controller
             {
                 // only change direction
                 p.SetFace(dir);
-            }         
+            }
         }
         #endregion // MakeMove
 

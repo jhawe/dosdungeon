@@ -59,7 +59,7 @@ namespace DosDungeon.Views
             this.graphics.Clear(BACKGROUND);
 
             // show summary screen of level
-            if (level.IsFinished)
+            if (level.State == GameState.LevelFinished)
             {
                 // TODO: show level summary in a more sophisticated
                 // way
@@ -69,6 +69,20 @@ namespace DosDungeon.Views
                 sb.AppendLine("Total Health: " + player.Health);
                 sb.AppendLine("Total monsters killed: " + player.MonstersKilled);
                 sb.AppendLine("Press [ENTER] to load the next level.");
+
+                this.graphics.DrawString(sb.ToString(), new Font(FontFamily.GenericMonospace, 10),
+                    new SolidBrush(Color.Red), 5, 5);
+            }
+            else if (level.State == GameState.GameOver)
+            {
+                // TODO: show level summary in a more sophisticated
+                // way
+                StringBuilder sb = new StringBuilder();
+                sb.AppendLine("YOU DIED! (Level " + Game.COUNT_LEVEL + ")"); 
+                sb.AppendLine("Total Gold: " + player.Gold);
+                sb.AppendLine("Total Health: " + player.Health);
+                sb.AppendLine("Total monsters killed: " + player.MonstersKilled);
+                sb.AppendLine("Press [ENTER] to start anew!");
 
                 this.graphics.DrawString(sb.ToString(), new Font(FontFamily.GenericMonospace, 10),
                     new SolidBrush(Color.Red), 5, 5);
@@ -139,7 +153,7 @@ namespace DosDungeon.Views
                     break;
             }
             return c;
-        } 
+        }
         #endregion // GetColor
     }
 }

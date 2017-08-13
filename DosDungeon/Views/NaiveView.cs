@@ -42,12 +42,13 @@ namespace DosDungeon.Views
         internal override void Update(Level level, Player player)
         {
             GameForm gf = this.gameForm;
-            gf.Board.Clear();
+            // NOT FUNCTIONAL ANYMORE!
+            //gf.Board.Clear();
             // 'redraw'
             StringBuilder sb = new StringBuilder();
 
             // show summary screen of level
-            if (level.IsFinished)
+            if (level.State == GameState.LevelFinished)
             {
                 sb.AppendLine("Congratulations! You finished the level!");
                 sb.AppendLine("Total Gold: " + player.Gold);
@@ -87,7 +88,7 @@ namespace DosDungeon.Views
                 // lower boarder
                 sb.AppendLine(new string(b));
             }
-            gf.Board.Text = sb.ToString();
+            //gf.Board.Text = sb.ToString();
         }
         #endregion // Update
 
