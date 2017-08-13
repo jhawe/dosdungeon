@@ -16,6 +16,7 @@ namespace DosDungeon.Models
         #region Class Member
         int size;
         int[,] field;
+        private bool isFinished;
         private Position start;
         private Position end;
         private Position playerPos;
@@ -33,6 +34,7 @@ namespace DosDungeon.Models
             // member init
             this.mainPath = new LinkedList<Position>();
             this.branches = new List<LinkedList<Position>>();
+            this.isFinished = false;
         }
 
         /// <summary>
@@ -44,6 +46,7 @@ namespace DosDungeon.Models
             // member init
             this.mainPath = new LinkedList<Position>();
             this.branches = new List<LinkedList<Position>>();
+            this.isFinished = false;
             this.size = size;
             this.field = new int[this.size, this.size];
             // init field defaults
@@ -99,7 +102,18 @@ namespace DosDungeon.Models
             }
         }
 
-        public bool IsFinished { get; internal set; }
+        public bool IsFinished
+        {
+            get
+
+            {
+                return this.isFinished;
+            }
+            set
+            {
+                this.isFinished = value;
+            }
+        }
 
         #endregion // Properties
 

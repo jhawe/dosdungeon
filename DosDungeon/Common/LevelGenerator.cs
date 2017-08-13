@@ -29,13 +29,15 @@ namespace DosDungeon.Common
             {
                 GeneratePath(l);
                 GenerateBranches(l);
-
-                PopulateTreasures(l);
-                PopulateMonsters(l);
+                //GenerateRecursive(l);
             }
+
+            PopulateTreasures(l);
+            PopulateMonsters(l);
 
             return (l);
         }
+        #endregion // GenerateLevel
 
         private static void CheckPath(Level l)
         {
@@ -73,7 +75,7 @@ namespace DosDungeon.Common
             Position current = minDistPos;
             while (proceed)
             {
-                List<Position> ppos = GetPossibleDirections(l, current);
+                List<Position> ppos = GetBlocked(l, current);
                 foreach (Position p in ppos)
                 {
                     if (IsMoveTowardsEnd(l, current.X, current.Y, p.X, p.Y))
@@ -122,7 +124,6 @@ namespace DosDungeon.Common
                 }
             }
         }
-        #endregion // GenerateLevel
 
         #region GenerateBranches
         /// <summary>
@@ -137,16 +138,18 @@ namespace DosDungeon.Common
             // path
             var main = l.Main;
             var ml = main.Count;
+            // define a chance to get a branch dependent on the
+            // main path's length
+
+            // gets higher the longer the path
+            var c = (1 - (1.0 / ml)) * 0.4;
+
             foreach (Position p in main)
             {
-                // define a chance to get a branch dependent on the
-                // main path's length
-
-                // gets higher the longer the path
-                var c = (1 - (1.0 / ml)) * 0.5;
                 var r = Game.RNG.NextDouble();
                 if (c < r)
                 {
+                    Console.WriteLine("Creating new branch.");
                     GrowBranch(l, p);
                 }
             }
@@ -172,14 +175,20 @@ namespace DosDungeon.Common
                 var r = Game.RNG.NextDouble();
                 if (r < 0.05 && b.Count >= 3)
                 {
-                    break;
+                    proceed = false;
                 }
 
-                // get fields ignoreing that it should got towards the end position
-                var pfields = GetPossibleDirections(l, current);
+                // get fields
+                List<Position> pfields = GetBlocked(l, current);
+
+                // nowhere to go
+                if (pfields.Count < 1)
+                {
+                    proceed = false;
+                }
 
                 // first check whether we are back to the main path
-                Position rm = null;
+                List<Position> rm = new List<Position>();
                 foreach (Position pos in pfields)
                 {
                     if (l.GetField(pos.X, pos.Y) == Field.Main)
@@ -191,56 +200,71 @@ namespace DosDungeon.Common
                             r = Game.RNG.NextDouble();
                             if (r <= 0.33)
                             {
+                                // just stop, we dont need to add a new
+                                // branch entry since we have a main-entry here
                                 proceed = false;
                             }
                             else
                             {
-                                rm = pos;
+                                rm.Add(pos);
                             }
                         }
                     }
-                    else if (l.IsEdgeField(pos))
+                    else if (l.IsEdgeField(pos) && pos.X != l.Start.X && pos.Y != l.Start.Y)
                     {
                         // if we reached an edge, we have a 50% chance to stop here
                         r = Game.RNG.NextDouble();
                         if (r <= 0.5)
                         {
                             b.AddLast(pos);
+                            l.SetField(pos, Field.Branch);
+                            Console.WriteLine("adding position to branch: " + pos.X + ":" + pos.Y);
                             proceed = false;
                         }
-                    }
-                    else if (pos.X == current.X && pos.Y == current.Y)
-                    {
-                        rm = pos;
                     }
                 }
                 if (proceed)
                 {
-                    if (rm != null)
+                    if (rm.Count > 0)
                     {
-                        pfields.Remove(rm);
-                    }
-                    // choose a field by equal chance                                        
-                    r = Game.RNG.NextDouble();
-                    Position chosen = null;
-                    // each gets the same probability
-                    for (int i = 0; i < pfields.Count; i++)
-                    {
-                        // just devide by total possible moves
-                        // and 'weight' by current position
-                        var c = 1.0f / pfields.Count * (i + 1);
-                        if (r < c)
+                        foreach (Position p1 in rm)
                         {
-                            // choose the current position
-                            chosen = pfields[i];
-                            break;
+                            pfields.Remove(p1);
                         }
                     }
-                    b.AddLast(chosen);
-                    current = chosen;
+                    if (pfields.Count > 0)
+                    {
+                        // choose a field by equal chance                                        
+                        r = Game.RNG.NextDouble();
+                        Position chosen = null;
+                        // each gets the same probability
+                        for (int i = 0; i < pfields.Count; i++)
+                        {
+                            // just devide by total possible moves
+                            // and 'weight' by current position
+                            var c = 1.0f / pfields.Count * (i + 1);
+                            if (r < c)
+                            {
+                                // choose the current position
+                                chosen = pfields[i];
+                                break;
+                            }
+                        }
+                        Console.WriteLine("adding position to branch: " + chosen.X + ":" + chosen.Y);
+                        b.AddLast(chosen);
+                        l.SetField(chosen, Field.Branch);
+                        current = chosen;
+                    }
+                    else
+                    {
+                        proceed = false;
+                    }
                 }
             }
-            l.AddBranch(b);
+            if (b.Count > 0)
+            {
+                l.AddBranch(b);
+            }
         }
         #endregion // GrowBranch
 
@@ -289,63 +313,26 @@ namespace DosDungeon.Common
             while (proceed)
             {
                 // get possible directions
-                List<Position> pmoves = GetPossibleDirections(l, current);
+                List<Position> pmoves = GetBlocked(l, current);
 
-                // get distances to end position on the field
-                float[] distances = GetDistances(l.End.X, l.End.Y, pmoves);
-                // choose a Position more likely directed towards the end position,
-                // with some room for randomness
-                Position minDistMove = null;
-                int minDistMoveIdx = -1;
-                float minDist = Enumerable.Min<float>(distances);
-                for (int i = 0; i < distances.Length; i++)
+                if (pmoves.Count < 1)
                 {
-                    if (distances[i] == minDist)
-                    {
-                        minDistMove = pmoves[i];
-                        minDistMoveIdx = i;
-                        break;
-                    }
+                    break;
                 }
-                // TODO make a random choice, slightly favored to the 
-                // minDistMove
-                double r = Game.RNG.NextDouble();
-                Position c = null;
-                if (pmoves.Count == 4)
-                {
-                    if (r < 0.25) c = pmoves[0];
-                    if (r >= 0.25 && r < 0.5) c = pmoves[1];
-                    if (r >= 0.5 && r < 0.75) c = pmoves[2];
-                    if (r >= 0.75) c = pmoves[3];
-                }
-                else if (pmoves.Count == 3)
-                {
-                    if (r < 0.33) c = pmoves[0];
-                    if (r >= 0.33 && r < 0.66) c = pmoves[1];
-                    if (r >= 0.66) c = pmoves[2];
-                }
-                else if (pmoves.Count == 2)
-                {
-                    if (r < 0.5) c = pmoves[0];
-                    if (r >= 0.5) c = pmoves[1];
-                }
-                else
-                {
-                    c = minDistMove;
-                }
-                // extra chance for mindistmove
-                if (Game.RNG.NextDouble() > 0.75)
-                {
-                    c = minDistMove;
-                }
+
+                int minDistMoveIdx = GetMinDistMove(l.End, pmoves);
+
+                // choose a random move
+                current = ChooseMove(pmoves, minDistMoveIdx);
 
                 // set the new field for the main path
-                l.SetField(c.X, c.Y, Field.Main);
-                current = c;
-                l.Main.AddLast(c);
+                l.SetField(current, Field.Main);
+                l.Main.AddLast(current);
 
                 // check whether we arrived at an edge
-                if (l.IsEdgeField(current) && c.X != l.Start.X && c.Y != l.Start.Y)
+                if (l.End.X == current.X && l.End.Y == current.Y)
+                //.IsEdgeField(current) && 
+                //current.X != l.Start.X && current.Y != l.Start.Y)
                 {
                     proceed = false;
                 }
@@ -356,15 +343,104 @@ namespace DosDungeon.Common
         }
         #endregion // GeneratePath
 
-        #region GetPossibleDirections
+        private static Position ChooseMove(List<Position> pmoves, int minDistMoveIdx)
+        {
+            // TODO make a random choice, slightly favored to the 
+            // minDistMove
+            double r = Game.RNG.NextDouble();
+            Position minDistMove = pmoves[minDistMoveIdx];
+            Position c = null;
+            if (pmoves.Count == 4)
+            {
+                if (r < 0.25) c = pmoves[0];
+                if (r >= 0.25 && r < 0.5) c = pmoves[1];
+                if (r >= 0.5 && r < 0.75) c = pmoves[2];
+                if (r >= 0.75) c = pmoves[3];
+            }
+            else if (pmoves.Count == 3)
+            {
+                if (r < 0.33) c = pmoves[0];
+                if (r >= 0.33 && r < 0.66) c = pmoves[1];
+                if (r >= 0.66) c = pmoves[2];
+            }
+            else if (pmoves.Count == 2)
+            {
+                if (r < 0.5) c = pmoves[0];
+                if (r >= 0.5) c = pmoves[1];
+            }
+            else
+            {
+                c = minDistMove;
+            }
+            // extra chance for mindistmove
+            if (Game.RNG.NextDouble() < 0.1)
+            {
+                c = minDistMove;
+            }
+            return c;
+        }
+
+        private static int GetMinDistMove(Position reference, List<Position> choices)
+        {
+            // get distances to end position on the field
+            float[] distances = GetDistances(reference.X, reference.Y, choices);
+            int minDistMoveIdx = -1;
+            float minDist = Enumerable.Min<float>(distances);
+            for (int i = 0; i < distances.Length; i++)
+            {
+                if (distances[i] == minDist)
+                {
+                    minDistMoveIdx = i;
+                    break;
+                }
+            }
+            return minDistMoveIdx;
+        }
+
+        #region GenerateRecursive
+
+        private static void GenerateRecursive(Level l)
+        {
+            // start recursion
+            GenerateStartEnd(l);
+            Position p = l.Start;
+            RGenRec(l, p);
+        }
+
+        private static void RGenRec(Level l, Position p, bool isBranch = false)
+        {
+            // TODO implement
+            Field toset = isBranch ? Field.Branch : Field.Main;
+
+            // random stop if branch
+            if (Game.RNG.NextDouble() < 0.33 && !isBranch)
+            {
+                l.SetField(p, toset);
+                return;
+            }
+
+            List<Position> pdirs = GetBlocked(l, p);
+            if (pdirs.Count > 0)
+            {
+                int midx = GetMinDistMove(l.End, pdirs);
+                Position minDistMove = pdirs[midx];
+
+            }
+            // branch randomly, also two side branching
+        }
+
+        #endregion // GenerateRecursive
+
+        #region GetBlocked
         /// <summary>
-        /// Gets a list of possible 'directions' for a new path entry
+        /// For a level and a position, get the fields next to the position which are 
+        /// currently blocked
         /// </summary>
         /// <param name="l">The level for which to get the directions</param>
         /// <param name="x">The current x position</param>
         /// <param name="y">The current y position</param>
         /// <returns>A list of moves to which a path could be extended</returns>
-        private static List<Position> GetPossibleDirections(Level l, Position pos)
+        private static List<Position> GetBlocked(Level l, Position pos)
         {
             // generate a Position for each possible direction
             // only be able to Position to "blocked" fields (default field setting)
@@ -388,7 +464,7 @@ namespace DosDungeon.Common
             int y1 = y;
             Field f = l.GetField(x1, y1);
 
-            if (f != Field.Main && f != Field.NA)
+            if (f == Field.Blocked)
             {
                 result.Add(new Position(x1, y1));
             }
@@ -396,7 +472,7 @@ namespace DosDungeon.Common
             x1 = x - 1;
             y1 = y;
             f = l.GetField(x1, y1);
-            if (f != Field.Main && f != Field.NA)
+            if (f == Field.Blocked)
             {
                 result.Add(new Position(x1, y1));
             }
@@ -405,7 +481,7 @@ namespace DosDungeon.Common
             x1 = x;
             y1 = y - 1;
             f = l.GetField(x1, y1);
-            if (f != Field.Main && f != Field.NA)
+            if (f == Field.Blocked)
             {
                 result.Add(new Position(x1, y1));
             }
@@ -414,14 +490,14 @@ namespace DosDungeon.Common
             x1 = x;
             y1 = y + 1;
             f = l.GetField(x1, y1);
-            if (f != Field.Main && f != Field.NA)
+            if (f == Field.Blocked)
             {
                 result.Add(new Position(x1, y1));
             }
 
             return (result);
         }
-        #endregion // GetPossibleDirections
+        #endregion // GetBlocked
 
         #region IsMoveTowardsEnd
         /// <summary>

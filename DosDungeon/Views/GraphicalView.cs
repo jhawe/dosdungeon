@@ -12,8 +12,7 @@ namespace DosDungeon.Views
     class GraphicalView : AView
     {
         private GameForm form;
-        private Graphics graphics;
-        private Level level;
+        private Graphics graphics;        
         // define the colors for the individual fields in the view
         // to be used instrad of real graphics for now
         private Color COLOR_PLAYER = Color.Blue;
@@ -29,38 +28,37 @@ namespace DosDungeon.Views
 
         #region Implement IView
 
-        internal static new AView Create(GameForm form, Level level)
+        internal static new AView Create(GameForm form)
         {            
-            GraphicalView view = new GraphicalView();
-            view.level = level;
-            // we expected a quadratic view for now
-            view.FIELD_SIZE = (int)Math.Floor(form.gameView.Size.Height / view.level.Size * 1.0);
-
+            GraphicalView view = new GraphicalView();            
             view.form = form;
             view.graphics = form.gameView.CreateGraphics();
             return (view);
         }
 
-        internal override void Update(Player player)
+        internal override void Update(Level level, Player player)
         {
+            // we expected a quadratic view for now
+            this.FIELD_SIZE = (int)Math.Floor(form.gameView.Size.Height / level.Size * 1.0);
+
             // draw the field
             this.graphics.Clear(BACKGROUND);
 
             // show summary screen of level
-            if (this.level.IsFinished)
+            if (level.IsFinished)
             {
               // TODO: show level summary
             }
             else
             {   
                 // board
-                for (int i = 0; i < this.level.Size; i++)
+                for (int i = 0; i < level.Size; i++)
                 {                    
-                    for (int j = 0; j < this.level.Size; j++)
+                    for (int j = 0; j < level.Size; j++)
                     {
                         Brush b = null;
                         // set appropriate pen
-                        if (i == this.level.End.X && j == this.level.End.Y)
+                        if (i == level.End.X && j == level.End.Y)
                         {
                             b = new SolidBrush(COLOR_END);
                         }

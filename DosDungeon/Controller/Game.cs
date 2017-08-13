@@ -49,11 +49,11 @@ namespace DosDungeon.Controller
             // initialize game variables
             if (false)
             {
-                this.view = NaiveView.Create(gf, this.level);
+                this.view = NaiveView.Create(gf);
             }
             else
             {
-                this.view = GraphicalView.Create(gf, this.level);
+                this.view = GraphicalView.Create(gf);
             }
         }
         #endregion // Constructor
@@ -140,7 +140,7 @@ namespace DosDungeon.Controller
                     UpdateModels();
 
                     // update view
-                    this.view.Update(this.player);
+                    this.view.Update(this.level, this.player);
 
                     // check whether the player finished
                     if (this.level.End.X == this.player.Position.X
@@ -158,7 +158,7 @@ namespace DosDungeon.Controller
                         InitLevel(this.levelSize);
                         this.state = GameState.Running;
                     }
-                    this.view.Update(this.player);
+                    this.view.Update(this.level, this.player);
                 }
             }
             else

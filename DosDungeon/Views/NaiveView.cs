@@ -15,8 +15,7 @@ namespace DosDungeon.Views
         const char END = 'E';
         const char TREASURE = 'T';
 
-        private GameForm gameForm = null;
-        private Level level;
+        private GameForm gameForm = null;        
 
         #region Implement IView
 
@@ -26,10 +25,9 @@ namespace DosDungeon.Views
         /// </summary>
         /// <param name="gf"></param>
         /// <returns></returns>
-        internal static new AView Create(GameForm gf, Level level)
+        internal static new AView Create(GameForm gf)
         {
-            NaiveView view = new NaiveView();
-            view.level = level;
+            NaiveView view = new NaiveView();            
             view.gameForm = gf;
             return (view);
         }
@@ -41,7 +39,7 @@ namespace DosDungeon.Views
         /// </summary>
         /// <param name="level">The currently played lavel</param>
         /// <param name="player">The current player instance</param>
-        internal override void Update(Player player)
+        internal override void Update(Level level, Player player)
         {
             GameForm gf = this.gameForm;
             gf.Board.Clear();
@@ -49,7 +47,7 @@ namespace DosDungeon.Views
             StringBuilder sb = new StringBuilder();
 
             // show summary screen of level
-            if (this.level.IsFinished)
+            if (level.IsFinished)
             {
                 sb.AppendLine("Congratulations! You finished the level!");
                 sb.AppendLine("Total Gold: " + player.Gold);
@@ -59,26 +57,26 @@ namespace DosDungeon.Views
             else
             {
                 // upper border
-                var b = new char[this.level.Size + 2];
+                var b = new char[level.Size + 2];
                 for (int i = 0; i < b.Length; i++) b[i] = BORDER;
                 sb.AppendLine(new string(b));
 
                 // board
-                for (int i = 0; i < this.level.Size; i++)
+                for (int i = 0; i < level.Size; i++)
                 {
-                    var line = new char[this.level.Size + 2];
+                    var line = new char[level.Size + 2];
                     line[0] = BORDER;
                     line[line.Length - 1] = BORDER;
-                    for (int j = 0; j < this.level.Size; j++)
+                    for (int j = 0; j < level.Size; j++)
                     {
                         var fc = '#';
-                        if (i == this.level.End.X && j == this.level.End.Y)
+                        if (i == level.End.X && j == level.End.Y)
                         {
                             fc = END;
                         }
                         else
                         {
-                            Field f = this.level.GetField(i, j);
+                            Field f = level.GetField(i, j);
                             fc = GetFieldChar(f);
                         }
                         line[j + 1] = fc;
