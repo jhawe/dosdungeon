@@ -552,14 +552,14 @@ namespace DosDungeon.Common
             int[] minmax = new int[] { 0, maxPos };
 
             // whether to start at vertical or horizontal?
-            int r = Game.RNG.Next(0, 1);
+            int r = Game.RNG.Next(0, 2);
             if (r == 0)
             {
                 // left or right start
-                r = Game.RNG.Next(0, 1);
+                r = Game.RNG.Next(0, 2);
                 startY = minmax[r];
                 // random point on vertical axis
-                startX = Game.RNG.Next(0, maxPos);
+                startX = Game.RNG.Next(0, maxPos + 1);
 
                 // end point, left or right
                 endY = minmax[1 - r];
@@ -568,21 +568,21 @@ namespace DosDungeon.Common
                 if (startX >= maxPos / 2)
                 {
                     // lower quartile
-                    endX = Game.RNG.Next(0, maxPos / 4);
+                    endX = Game.RNG.Next(0, (maxPos / 4) + 1);
                 }
                 else
                 {
                     // upper quartile
-                    endX = Game.RNG.Next(maxPos / 2 + maxPos / 4, maxPos);
+                    endX = Game.RNG.Next(maxPos / 2 + maxPos / 4, maxPos + 1);
                 }
             }
             else
             {
                 // top or bottom start
-                r = Game.RNG.Next(0, 1);
+                r = Game.RNG.Next(0, 2);
                 startX = minmax[r];
                 // random point on horizontal axis
-                startY = Game.RNG.Next(0, maxPos);
+                startY = Game.RNG.Next(0, maxPos + 1);
 
                 // end point, top or bottom
                 endX = minmax[1 - r];
@@ -591,12 +591,12 @@ namespace DosDungeon.Common
                 if (startY >= maxPos / 2)
                 {
                     // lower quartile
-                    endY = Game.RNG.Next(0, maxPos / 4);
+                    endY = Game.RNG.Next(0, (maxPos / 4) + 1);
                 }
                 else
                 {
                     // upper quartile
-                    endY = Game.RNG.Next(maxPos / 2 + maxPos / 4, maxPos);
+                    endY = Game.RNG.Next(maxPos / 2 + maxPos / 4, maxPos + 1);
                 }
             }
             // set positions to level instance
