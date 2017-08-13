@@ -53,6 +53,7 @@
   <ItemGroup>
     <Compile Include="Common\Enums.cs" />
     <Compile Include="Common\LevelGenerator.cs" />
+    <Compile Include="Common\Statics.cs" />
     <Compile Include="Controller\Game.cs" />
     <Compile Include="GameForm.cs">
       <SubType>Form</SubType>
@@ -62,6 +63,8 @@
     </Compile>
     <Compile Include="Abstracts\AView.cs" />
     <Compile Include="Models\Level.cs" />
+    <Compile Include="Models\Monster.cs" />
+    <Compile Include="Models\Moveable.cs" />
     <Compile Include="Models\Position.cs" />
     <Compile Include="Models\Player.cs" />
     <Compile Include="Program.cs" />

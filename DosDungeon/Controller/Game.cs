@@ -3,6 +3,7 @@ using DosDungeon.Interfaces;
 using DosDungeon.Models;
 using DosDungeon.Views;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Windows.Forms;
 using System.Windows.Input;
@@ -25,7 +26,7 @@ namespace DosDungeon.Controller
         readonly TimeSpan TargetElapsedTime = TimeSpan.FromTicks(TimeSpan.TicksPerSecond / 120);
         readonly TimeSpan MaxElapsedTime = TimeSpan.FromTicks(TimeSpan.TicksPerSecond / 10);
         private TimeSpan lastTime;
-
+        private List<Monster> monster; 
         // random number generator used for alls random processes in the game
         internal static Random RNG = new Random();
         private bool enterDown;
@@ -43,6 +44,7 @@ namespace DosDungeon.Controller
         {
             this.stopWatch = sw;
             this.player = new Player("Hans");
+            this.monster = new List<Monster>();
 
             InitLevel(this.levelSize);
 
@@ -66,7 +68,7 @@ namespace DosDungeon.Controller
         /// </summary>
         /// <param name="levelSize">The size of the level to init</param>
         private void InitLevel(int levelSize)
-        {
+        {            
             // generate first level
             this.level = LevelGenerator.GenerateLevel(this.levelSize);
             int startX = level.Start.X;
@@ -76,6 +78,17 @@ namespace DosDungeon.Controller
             Position m = new Position(startX, startY);
             this.player.SetPosition(m);
             this.level.SetPlayerPos(this.player.Position);
+
+            // foreach monster field, we create a monster instance to
+            // be able to manipulate them
+            // reset monster
+            this.monster = new List<Monster>();
+            foreach (Position ms in this.level.MonsterStarts)
+            {
+                Monster mo = new Monster(1);
+                mo.SetPosition(ms);
+                this.monster.Add(mo);
+            }
 
             // set the player facing to one of the next free fields
             if (this.level.IsFieldAccessible(m.X + 1, m.Y))
@@ -194,8 +207,60 @@ namespace DosDungeon.Controller
         {
             PlayerAction();
             MovePlayer();
+            MoveMonster();
         }
         #endregion // UpdateModels
+
+        private void MoveMonster()
+        {
+            foreach(Monster m in this.monster)
+            {
+                // check whether we attack the player
+                // if monster moves to player -> attack player; dont move
+                if(Statics.Adjacent(this.player.Position, m.Position))
+                {
+                    AttackPlayer(m);
+                    continue;
+                }
+                // now just move the monster
+                List<Position> lp = LevelGenerator.GetNeighbourAccessFields(this.level, m.Position);
+
+                // should never be the case
+                if (lp.Count < 1)
+                {
+                    throw new Exception("Sanity condition not met: monster cannot move.");
+                }
+                if (Game.RNG.NextDouble() <= 0.25)
+                {
+                    // move towards player
+                    int minDist = LevelGenerator.GetMinDistMove(this.player.Position, lp);
+                    Position np = lp[minDist];
+                    
+                    // check face of the monster
+                    if (m.Face == GetMoveDirection(m.Position, np))
+                    {
+                        // move the monster
+                        // reset the field the monster was previously on
+                        this.level.SetField(m.Position, Field.Free);
+                        m.SetPosition(lp[minDist]);
+                        this.level.SetField(m.Position, Field.Monster);
+                    } else
+                    {
+                        // just set the new face
+                        m.SetFace(GetMoveDirection(m.Position, np));
+                    }                    
+                }
+            }
+        }
+
+        #region AttackPlayer
+        private void AttackPlayer(Monster m)
+        {
+            // just reduce health
+            // TODO adjust amount by level/strength of monster?
+            this.player.HealthDown(1);
+        }
+        #endregion // AttackPlayer
 
         #region PlayerAction
         /// <summary>
@@ -210,13 +275,26 @@ namespace DosDungeon.Controller
 
                 // one attack currently kills monsters
                 Position af = this.player.AttackField;
-                Field ap = this.level.GetField(af);
-                if (ap == Field.Monster)
+                Monster rm = null;
+                foreach (Monster m in this.monster)
                 {
-                    this.level.SetField(af, Field.Free);
-                    this.player.MonstersKilledUp();
-                    this.player.GoldUp(10);
+                    // check whether attack field and the current monster
+                    // position overlap
+                    if(af.X == m.Position.X && af.Y == m.Position.Y)
+                    {
+                        // remove monster from our list
+                        rm = m;
+                        this.level.SetField(af, Field.Free);
+                        this.player.MonstersKilledUp();
+                        int gold = (int)Math.Min(10, RNG.NextDouble() * 100);
+                        this.player.GoldUp(gold);
+                        break;
+                    }
                 }
+                if(rm != null)
+                {
+                    this.monster.Remove(rm);
+                }                
             }
         } 
         #endregion // PayerAction

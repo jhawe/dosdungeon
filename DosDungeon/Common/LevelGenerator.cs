@@ -2,9 +2,8 @@
 using DosDungeon.Models;
 using System;
 using System.Collections.Generic;
+using DosDungeon.Common;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace DosDungeon.Common
 {
@@ -52,7 +51,7 @@ namespace DosDungeon.Common
                 {
 
                     Field f = l.GetField(i, j);
-                    float d = GetDistance(i, j, l.End.X, l.End.Y);
+                    float d = Statics.GetDistance(i, j, l.End.X, l.End.Y);
                     if (l.IsFieldAccessible(i, j)
                         && d < minFreeDist
                         && !(i == l.End.X && j == l.End.Y))
@@ -116,7 +115,8 @@ namespace DosDungeon.Common
                                 // 5% chance to get a monster
                                 if (Game.RNG.NextDouble() < 0.05)
                                 {
-                                    l.SetField(new Position(i, j), Field.Monster);
+                                    Position n = new Position(i, j);
+                                    l.AddMonster(n);
                                 }
                             }
                         }
@@ -173,7 +173,7 @@ namespace DosDungeon.Common
                 // 5% chance to just stop where we are
                 // if we walked at least l.size/2 fields
                 var r = Game.RNG.NextDouble();
-                if (r < 0.05 && b.Count >= l.Size/2 && l.IsEdgeField(current))
+                if (r < 0.05 && b.Count >= l.Size / 2 && l.IsEdgeField(current))
                 {
                     proceed = false;
                 }
@@ -389,7 +389,7 @@ namespace DosDungeon.Common
             return c;
         }
 
-        private static int CountNeighbourAccessFields(Level level, Position m)
+        internal static int CountNeighbourAccessFields(Level level, Position m)
         {
             int c = 0;
             if (level.IsFieldAccessible(m.X, m.Y - 1))
@@ -411,7 +411,29 @@ namespace DosDungeon.Common
             return c;
         }
 
-        private static int GetMinDistMove(Position reference, List<Position> choices)
+        internal static List<Position> GetNeighbourAccessFields(Level level, Position m)
+        {
+            List<Position> result = new List<Position>();
+            if (level.IsFieldAccessible(m.X, m.Y - 1))
+            {
+                result.Add(new Position(m.X, m.Y - 1));
+            }
+            if (level.IsFieldAccessible(m.X + 1, m.Y))
+            {
+                result.Add(new Position(m.X + 1, m.Y));
+            }
+            if (level.IsFieldAccessible(m.X - 1, m.Y))
+            {
+                result.Add(new Position(m.X - 1, m.Y));
+            }
+            if (level.IsFieldAccessible(m.X, m.Y + 1))
+            {
+                result.Add(new Position(m.X, m.Y + 1));
+            }
+            return result;
+        }
+
+        internal static int GetMinDistMove(Position reference, List<Position> choices)
         {
             // get distances to end position on the field
             float[] distances = GetDistances(reference.X, reference.Y, choices);
@@ -653,27 +675,12 @@ namespace DosDungeon.Common
                 Position m = positions[i];
 
                 // euclidian distance
-                result[i] = GetDistance(x, y, m.X, m.Y);
+                result[i] = Statics.GetDistance(x, y, m.X, m.Y);
             }
             return (result);
         }
         #endregion // GetDistances
-
-        #region GetDistance
-        /// <summary>
-        /// Gets euclidean distance between to points
-        /// </summary>
-        /// <returns></returns>
-        private static float GetDistance(int x1, int y1, int x2, int y2)
-        {
-            float dx = x1 - x2;
-            float dy = y1 - y2;
-
-            // euclidian distance
-            return (float)Math.Sqrt(dx * dx + dy * dy);
-        }
-        #endregion // GetDistance
-
+        
         #region GenerateNaive
         /// <summary>
         /// Generates a very naive level for testing purposes

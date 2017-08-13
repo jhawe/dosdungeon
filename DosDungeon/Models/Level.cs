@@ -1,4 +1,5 @@
-﻿using DosDungeon.Controller;
+﻿using DosDungeon.Common;
+using DosDungeon.Controller;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -23,6 +24,7 @@ namespace DosDungeon.Models
         private LinkedList<Position> mainPath;
         private List<LinkedList<Position>> branches;
         private int playerField;
+        private List<Position> monsterStarts;
         #endregion // Class Member
 
         #region Constructor
@@ -35,6 +37,7 @@ namespace DosDungeon.Models
             this.mainPath = new LinkedList<Position>();
             this.branches = new List<LinkedList<Position>>();
             this.isFinished = false;
+            this.monsterStarts = new List<Position>();
         }
 
         /// <summary>
@@ -47,6 +50,7 @@ namespace DosDungeon.Models
             this.mainPath = new LinkedList<Position>();
             this.branches = new List<LinkedList<Position>>();
             this.isFinished = false;
+            this.monsterStarts = new List<Position>();
             this.size = size;
             this.field = new int[this.size, this.size];
             // init field defaults
@@ -102,6 +106,14 @@ namespace DosDungeon.Models
             }
         }
 
+        internal List<Position> MonsterStarts
+        {
+            get
+            {
+                return this.monsterStarts;
+            }
+        }
+
         public bool IsFinished
         {
             get
@@ -152,6 +164,13 @@ namespace DosDungeon.Models
             }
             this.branches.Add(b);
         }
+
+        internal void AddMonster(Position n)
+        {
+            this.monsterStarts.Add(n);
+            SetField(n, Field.Monster);
+        }
+
         #endregion // AddBranch
 
         #region IsEdgeField
@@ -274,7 +293,7 @@ namespace DosDungeon.Models
 
         }
         #endregion // SetPlayerPos
-
+                
         #endregion // Methods
     }
 }
