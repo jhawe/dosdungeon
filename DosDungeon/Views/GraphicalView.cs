@@ -1,4 +1,5 @@
-﻿using DosDungeon.Interfaces;
+﻿using DosDungeon.Controller;
+using DosDungeon.Interfaces;
 using DosDungeon.Models;
 using System;
 using System.Collections.Generic;
@@ -12,7 +13,7 @@ namespace DosDungeon.Views
     class GraphicalView : AView
     {
         private GameForm form;
-        private Graphics graphics;        
+        private Graphics graphics;
         // define the colors for the individual fields in the view
         // to be used instrad of real graphics for now
         private Color COLOR_PLAYER = Color.Blue;
@@ -28,14 +29,27 @@ namespace DosDungeon.Views
 
         #region Implement IView
 
+        #region Create
+        /// <summary>
+        /// Creates a new graphical view instance
+        /// </summary>
+        /// <param name="form">The base form of the game</param>
+        /// <returns>A new AView (GraphicalView) instance</returns>
         internal static new AView Create(GameForm form)
-        {            
-            GraphicalView view = new GraphicalView();            
+        {
+            GraphicalView view = new GraphicalView();
             view.form = form;
             view.graphics = form.gameView.CreateGraphics();
             return (view);
         }
+        #endregion // Create
 
+        #region Update
+        /// <summary>
+        /// Redraws the view for the given level and player information
+        /// </summary>
+        /// <param name="level"></param>
+        /// <param name="player"></param>
         internal override void Update(Level level, Player player)
         {
             // we expected a quadratic view for now
@@ -47,13 +61,23 @@ namespace DosDungeon.Views
             // show summary screen of level
             if (level.IsFinished)
             {
-              // TODO: show level summary
+                // TODO: show level summary in a more sophisticated
+                // way
+                StringBuilder sb = new StringBuilder();
+                sb.AppendLine("Congratulations! You finished level " + Game.COUNT_LEVEL + "!");
+                sb.AppendLine("Total Gold: " + player.Gold);
+                sb.AppendLine("Total Health: " + player.Health);
+                sb.AppendLine("Total monsters killed: " + player.MonstersKilled);
+                sb.AppendLine("Press [ENTER] to load the next level.");
+
+                this.graphics.DrawString(sb.ToString(), new Font(FontFamily.GenericMonospace, 10),
+                    new SolidBrush(Color.Red), 5, 5);
             }
             else
-            {   
+            {
                 // board
                 for (int i = 0; i < level.Size; i++)
-                {                    
+                {
                     for (int j = 0; j < level.Size; j++)
                     {
                         Brush b = null;
@@ -67,19 +91,27 @@ namespace DosDungeon.Views
                             Field f = level.GetField(i, j);
                             Color c = GetColor(f);
                             b = new SolidBrush(c);
-                         
-                        }                        
+
+                        }
                         // draw on current position with the chosen pen
-                        Rectangle rect = new Rectangle(j*FIELD_SIZE, i* FIELD_SIZE, 
+                        Rectangle rect = new Rectangle(j * FIELD_SIZE, i * FIELD_SIZE,
                             FIELD_SIZE, FIELD_SIZE);
                         this.graphics.FillRectangle(b, rect);
-                    }                    
-                }            
+                    }
+                }
             }
             this.form.Invalidate();
         }
+        #endregion // Update
+
         #endregion // Implement IView
 
+        #region GetColor
+        /// <summary>
+        /// Gets the representative color for a specific field
+        /// </summary>
+        /// <param name="f"></param>
+        /// <returns></returns>
         private Color GetColor(Field f)
         {
             Color c = Color.White;
@@ -91,7 +123,7 @@ namespace DosDungeon.Views
                     break;
                 case Field.Monster:
                     c = COLOR_MONSTER;
-                    break;                
+                    break;
                 case Field.Treasure:
                     c = COLOR_TREASURE;
                     break;
@@ -107,6 +139,7 @@ namespace DosDungeon.Views
                     break;
             }
             return c;
-        }
+        } 
+        #endregion // GetColor
     }
 }

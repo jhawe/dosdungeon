@@ -29,6 +29,7 @@ namespace DosDungeon.Controller
         private List<Monster> monster; 
         // random number generator used for alls random processes in the game
         internal static Random RNG = new Random();
+        internal static int COUNT_LEVEL = 1;
         private bool enterDown;
         private bool attackDown;
 
@@ -170,6 +171,7 @@ namespace DosDungeon.Controller
                         this.enterDown = false;
                         InitLevel(this.levelSize);
                         this.state = GameState.Running;
+                        COUNT_LEVEL++;
                     }
                     this.view.Update(this.level, this.player);
                 }
@@ -205,19 +207,22 @@ namespace DosDungeon.Controller
         /// </summary>
         private void UpdateModels()
         {
-            PlayerAction();
-            MovePlayer();
+            PlayerAction();            
             MoveMonster();
         }
         #endregion // UpdateModels
 
+        #region MoveMonster
+        /// <summary>
+        /// Moves monsters around the current level
+        /// </summary>
         private void MoveMonster()
         {
-            foreach(Monster m in this.monster)
+            foreach (Monster m in this.monster)
             {
                 // check whether we attack the player
                 // if monster moves to player -> attack player; dont move
-                if(Statics.Adjacent(this.player.Position, m.Position))
+                if (Statics.Adjacent(this.player.Position, m.Position))
                 {
                     AttackPlayer(m);
                     continue;
@@ -225,17 +230,17 @@ namespace DosDungeon.Controller
                 // now just move the monster
                 List<Position> lp = LevelGenerator.GetNeighbourAccessFields(this.level, m.Position);
 
-                // should never be the case
+                // should only very rarely be the case
                 if (lp.Count < 1)
                 {
-                    throw new Exception("Sanity condition not met: monster cannot move.");
+                   // do nothing continue
                 }
-                if (Game.RNG.NextDouble() <= 0.25)
+                if (Game.RNG.NextDouble() <= 0.2)
                 {
                     // move towards player
                     int minDist = LevelGenerator.GetMinDistMove(this.player.Position, lp);
                     Position np = lp[minDist];
-                    
+
                     // check face of the monster
                     if (m.Face == GetMoveDirection(m.Position, np))
                     {
@@ -244,21 +249,31 @@ namespace DosDungeon.Controller
                         this.level.SetField(m.Position, Field.Free);
                         m.SetPosition(lp[minDist]);
                         this.level.SetField(m.Position, Field.Monster);
-                    } else
+                    }
+                    else
                     {
                         // just set the new face
                         m.SetFace(GetMoveDirection(m.Position, np));
-                    }                    
+                    }
                 }
             }
-        }
+        } 
+        #endregion // MoveMonster
 
         #region AttackPlayer
+        /// <summary>
+        /// Let's a monster attack a player.
+        /// </summary>
+        /// <param name="m">The monster attacking the player.</param>
         private void AttackPlayer(Monster m)
         {
-            // just reduce health
-            // TODO adjust amount by level/strength of monster?
-            this.player.HealthDown(1);
+            // hits with probability of 66%
+            if (RNG.NextDouble() <= 0.66)
+            {
+                // just reduce health
+                // TODO adjust amount by level/strength of monster?
+                this.player.HealthDown(1);
+            }
         }
         #endregion // AttackPlayer
 
@@ -295,6 +310,10 @@ namespace DosDungeon.Controller
                 {
                     this.monster.Remove(rm);
                 }                
+            }
+            else
+            {
+                MovePlayer();
             }
         } 
         #endregion // PayerAction
