@@ -187,6 +187,7 @@ namespace DosDungeon.Controller
                 //this.view.Update(this.level, this.player);
                 // register currently pressed keys only
                 RegisterKeyDown();
+                this.view.Update(this.level, this.player);
             }
             
         }

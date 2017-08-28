@@ -16,23 +16,29 @@ namespace DosDungeon
     {
         Game game;
         Timer timer;
+       // Bitmap gameView;
         Stopwatch stopWatch = Stopwatch.StartNew();
 
         readonly TimeSpan TargetElapsedTime = TimeSpan.FromTicks(TimeSpan.TicksPerSecond / 60);
-        
+
         public GameForm()
         {
             InitializeComponent();
+            this.SetStyle(
+           ControlStyles.UserPaint |
+           ControlStyles.AllPaintingInWmPaint |
+           ControlStyles.DoubleBuffer, true);
+
         }
 
         private void OnFormLoad(object sender, EventArgs e)
         {
-            this.game = new Game(this, stopWatch);  
-            
+            this.game = new Game(this, stopWatch);
+
             timer = new Timer();
             timer.Interval = (int)TargetElapsedTime.TotalMilliseconds;
             timer.Tick += this.game.Update;
-            timer.Start();            
-        }             
+            timer.Start();
+        }
     }
 }

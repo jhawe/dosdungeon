@@ -1,6 +1,7 @@
 ﻿using DosDungeon.Controller;
 using DosDungeon.Interfaces;
 using DosDungeon.Models;
+using DosDungeon.Properties;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -29,6 +30,22 @@ namespace DosDungeon.Views
 
         #region Implement IView
 
+        internal static void SetDoubleBuffered(System.Windows.Forms.Control c)
+        {
+            //Taxes: Remote Desktop Connection and painting
+            //http://blogs.msdn.com/oldnewthing/archive/2006/01/03/508694.aspx
+            if (System.Windows.Forms.SystemInformation.TerminalServerSession)
+                return;
+
+            System.Reflection.PropertyInfo aProp =
+                  typeof(System.Windows.Forms.Control).GetProperty(
+                        "DoubleBuffered",
+                        System.Reflection.BindingFlags.NonPublic |
+                        System.Reflection.BindingFlags.Instance);
+
+            aProp.SetValue(c, true, null);
+        }
+
         #region Create
         /// <summary>
         /// Creates a new graphical view instance
@@ -39,6 +56,7 @@ namespace DosDungeon.Views
         {
             GraphicalView view = new GraphicalView();
             view.form = form;
+            SetDoubleBuffered(view.form.gameView);
             view.graphics = form.gameView.CreateGraphics();
             return (view);
         }
@@ -78,7 +96,7 @@ namespace DosDungeon.Views
                 // TODO: show level summary in a more sophisticated
                 // way
                 StringBuilder sb = new StringBuilder();
-                sb.AppendLine("YOU DIED! (Level " + Game.COUNT_LEVEL + ")"); 
+                sb.AppendLine("YOU DIED! (Level " + Game.COUNT_LEVEL + ")");
                 sb.AppendLine("Total Gold: " + player.Gold);
                 sb.AppendLine("Total Health: " + player.Health);
                 sb.AppendLine("Total monsters killed: " + player.MonstersKilled);
@@ -89,36 +107,72 @@ namespace DosDungeon.Views
             }
             else
             {
+                // temp image to draw the tiles on
+                Image board = new Bitmap(level.Size * FIELD_SIZE, level.Size * FIELD_SIZE);
+                Graphics gr = Graphics.FromImage(board);
+                
                 // board
                 for (int i = 0; i < level.Size; i++)
                 {
                     for (int j = 0; j < level.Size; j++)
                     {
-                        Brush b = null;
-                        // set appropriate pen
-                        if (i == level.End.X && j == level.End.Y)
-                        {
-                            b = new SolidBrush(COLOR_END);
-                        }
-                        else
-                        {
-                            Field f = level.GetField(i, j);
-                            Color c = GetColor(f);
-                            b = new SolidBrush(c);
-
-                        }
                         // draw on current position with the chosen pen
                         Rectangle rect = new Rectangle(j * FIELD_SIZE, i * FIELD_SIZE,
                             FIELD_SIZE, FIELD_SIZE);
-                        this.graphics.FillRectangle(b, rect);
+
+                        Field f = level.GetField(i, j);
+                        Image img;
+
+                        // set appropriate pen
+                        if (i == level.End.X && j == level.End.Y)
+                        {
+                            img = Resources.End;
+                        }
+                        else
+                        {
+                            img = GetImage(f);
+                        }
+                        // draw the full image
+                        gr.DrawImage(img, rect);
                     }
                 }
+                // draw the temp image in one go to the main output
+                this.graphics.DrawImage(board, new Point(0, 0));                
             }
-            this.form.Invalidate();
+// this.form.Invalidate();
         }
         #endregion // Update
 
         #endregion // Implement IView
+
+        private Image GetImage(Field f)
+        {
+            Image img = null;
+
+            switch (f)
+            {
+                case Field.Player:
+                    img = Resources.Player;
+                    break;
+                case Field.Monster:
+                    img = Resources.Monster;
+                    break;
+                case Field.Treasure:
+                    img = Resources.Crate;
+                    break;
+                case Field.Blocked:
+                    img = Resources.Crate;
+                    break;
+                case Field.Branch:
+                case Field.Free:
+                case Field.Main:
+                    img = Resources.Sand;
+                    break;
+                default:
+                    break;
+            }
+            return img;
+        }
 
         #region GetColor
         /// <summary>
