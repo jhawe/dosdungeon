@@ -116,7 +116,7 @@ namespace DosDungeon.Views
                             }
                             else
                             {
-                                img = GetImage(f);
+                                img = GetImage(f, player.Face);
                             }
                             // draw the full image
                             gr.DrawImage(img, rect);
@@ -132,14 +132,37 @@ namespace DosDungeon.Views
 
         #endregion // Implement IView
 
-        private Image GetImage(Field f)
+        /// <summary>
+        /// Gets the image to be drawn for the specified field
+        /// </summary>
+        /// <param name="f">the field</param>
+        /// <param name="pf">If the field is the player or a monster, then we need the direction
+        /// this entity is facing in order to get the right image</param>
+        /// <returns></returns>
+        private Image GetImage(Field f, Direction d)
         {
             Image img = null;
 
             switch (f)
             {
                 case Field.Player:
-                    img = Resources.Player;
+                    switch (d)
+                    {
+                        case Direction.Down:
+                            img = Resources.Player_Down;
+                            break;
+                        case Direction.Up:
+                            img = Resources.Player_Up;
+                            break;
+                        case Direction.Left:
+                            img = Resources.Player_Left;
+                            break;
+                        case Direction.Right:
+                            img = Resources.Player_Right;
+                            break;
+                            default: break;
+                    }
+                    
                     break;
                 case Field.Monster:
                     img = Resources.Monster;

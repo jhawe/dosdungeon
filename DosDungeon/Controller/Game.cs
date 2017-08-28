@@ -30,7 +30,7 @@ namespace DosDungeon.Controller
         private TimeSpan lastTime;
         private List<Monster> monster;
         // restart music
-        private SoundPlayer sp = null;        
+        private SoundPlayer sp = null;
         // random number generator used for alls random processes in the game
         internal static Random RNG = new Random();
         internal static int COUNT_LEVEL = 1;
@@ -58,7 +58,7 @@ namespace DosDungeon.Controller
             InitLevel(this.levelSize);
 
             // initialize game view            
-            this.view = GraphicalView.Create(gf);           
+            this.view = GraphicalView.Create(gf);
         }
         #endregion // Constructor
 
@@ -162,6 +162,14 @@ namespace DosDungeon.Controller
             // register currently pressed keys
             RegisterKeyDown();
 
+            // check whether we have a turn
+            if (IsTurn(this.nextMove))
+            {
+                // always instantly set the new direction
+                // the player is facing
+                MovePlayer();
+            }
+
             // only update after 0.5 seconds
             if (elapsedTime > TimeSpan.FromSeconds(0.3))
             {
@@ -170,7 +178,7 @@ namespace DosDungeon.Controller
                 if (this.state == GameState.Running)
                 {
                     // update data
-                    UpdateModels();                   
+                    UpdateModels();
 
                     // check whether the player finished
                     if (this.level.End.X == this.player.Position.X
@@ -189,7 +197,7 @@ namespace DosDungeon.Controller
                         this.state = GameState.Running;
                         this.level.State = GameState.Running;
                         COUNT_LEVEL++;
-                    }                    
+                    }
                 }
                 else if (this.state == GameState.GameOver)
                 {
@@ -201,14 +209,19 @@ namespace DosDungeon.Controller
                         this.state = GameState.Running;
                         this.level.State = this.state;
                         RestartSound();
-                    }                    
+                    }
                 }
             }
-            
+
             // update the view (draw new image)
             this.view.Update(this.level, this.player);
         }
         #endregion // Update
+
+        private bool IsTurn(Position p)
+        {
+            return p != null && GetMoveDirection(this.player.Position, p) != player.Face;
+        }
 
         #region RegisterKeyDown
         /// <summary>
@@ -299,7 +312,7 @@ namespace DosDungeon.Controller
                 // just reduce health
                 // TODO adjust amount by level/strength of monster?
                 this.player.HealthDown(1);
-                if(this.player.Health == 0)
+                if (this.player.Health == 0)
                 {
                     this.state = GameState.GameOver;
                     this.level.State = GameState.GameOver;
@@ -375,7 +388,7 @@ namespace DosDungeon.Controller
                 }
             }
         }
-        
+
         #endregion // MovePlayer
 
         #region IsValidMove

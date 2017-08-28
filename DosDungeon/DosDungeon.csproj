@@ -79,7 +79,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
-    <None Include="Resources\little town - orchestral.ogg" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="GameForm.resx">
@@ -109,6 +108,18 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\little_town_-_orchestral.wav" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Player_Right.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Player_Down.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Player_Left.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Player_Up.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
