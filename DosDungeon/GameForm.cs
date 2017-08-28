@@ -14,13 +14,16 @@ namespace DosDungeon
 {
     public partial class GameForm : Form
     {
-        Game game;
-        Timer timer;
-       // Bitmap gameView;
-        Stopwatch stopWatch = Stopwatch.StartNew();
-
+        private Game game;
+        private Timer timer;
+        internal Bitmap gameView;
+        private Stopwatch stopWatch = Stopwatch.StartNew();
         readonly TimeSpan TargetElapsedTime = TimeSpan.FromTicks(TimeSpan.TicksPerSecond / 60);
 
+        #region Constructor
+        /// <summary>
+        /// Constructor
+        /// </summary>
         public GameForm()
         {
             InitializeComponent();
@@ -28,7 +31,31 @@ namespace DosDungeon
            ControlStyles.UserPaint |
            ControlStyles.AllPaintingInWmPaint |
            ControlStyles.DoubleBuffer, true);
+            this.ResizeEnd += new EventHandler(CreateBackBufferHandler);
+            this.Load += new EventHandler(CreateBackBufferHandler);
+            this.Paint += new PaintEventHandler(PaintHandler);
 
+        }
+        #endregion // Constructor
+
+        #region Methods
+
+        #region Eventmethods
+
+        void PaintHandler(object sender, PaintEventArgs e)
+        {
+            if (this.gameView != null)
+            {
+                e.Graphics.DrawImageUnscaled(this.gameView, Point.Empty);
+            }
+        }
+
+        void CreateBackBufferHandler(object sender, EventArgs e)
+        {
+            if (this.gameView != null)
+                this.gameView.Dispose();
+
+            this.gameView = new Bitmap(ClientSize.Width, ClientSize.Height);
         }
 
         private void OnFormLoad(object sender, EventArgs e)
@@ -40,5 +67,8 @@ namespace DosDungeon
             timer.Tick += this.game.Update;
             timer.Start();
         }
+        #endregion // Eventmethods
+
+        #endregion // Methods
     }
 }
