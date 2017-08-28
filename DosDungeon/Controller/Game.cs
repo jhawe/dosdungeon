@@ -5,6 +5,8 @@ using DosDungeon.Views;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
+using System.Media;
 using System.Windows.Forms;
 using System.Windows.Input;
 
@@ -27,6 +29,8 @@ namespace DosDungeon.Controller
         readonly TimeSpan MaxElapsedTime = TimeSpan.FromTicks(TimeSpan.TicksPerSecond / 10);
         private TimeSpan lastTime;
         private List<Monster> monster;
+        // restart music
+        private SoundPlayer sp = null;        
         // random number generator used for alls random processes in the game
         internal static Random RNG = new Random();
         internal static int COUNT_LEVEL = 1;
@@ -43,6 +47,10 @@ namespace DosDungeon.Controller
         /// <param name="sw">The timer stopwatch</param>
         internal Game(GameForm gf, Stopwatch sw)
         {
+            // start music
+            this.sp = new SoundPlayer(Properties.Resources.bg_music);
+            this.sp.Play();
+
             this.stopWatch = sw;
             this.player = new Player("Hans");
             this.monster = new List<Monster>();
@@ -67,6 +75,11 @@ namespace DosDungeon.Controller
             this.level = LevelGenerator.GenerateLevel(this.levelSize);
             int startX = level.Start.X;
             int startY = level.Start.Y;
+
+            // reset player stats
+            this.player.Health = 5;
+            this.player.Gold = 0;
+            this.player.MonstersKilled = 0;
 
             // set player on the current board
             Position m = new Position(startX, startY);
@@ -124,6 +137,16 @@ namespace DosDungeon.Controller
             }
         }
 
+        #region RestartSound
+        /// <summary>
+        /// Restarts the background sound from the beginning
+        /// </summary>
+        internal void RestartSound()
+        {
+            this.sp.Play();
+        }
+        #endregion // RestartSound
+
         #region Update
         /// <summary>
         /// Main Update loop function (as eventhandler of the main timer)
@@ -136,6 +159,9 @@ namespace DosDungeon.Controller
             TimeSpan currentTime = stopWatch.Elapsed;
             TimeSpan elapsedTime = currentTime - lastTime;
 
+            // register currently pressed keys
+            RegisterKeyDown();
+
             // only update after 0.5 seconds
             if (elapsedTime > TimeSpan.FromSeconds(0.3))
             {
@@ -144,10 +170,7 @@ namespace DosDungeon.Controller
                 if (this.state == GameState.Running)
                 {
                     // update data
-                    UpdateModels();
-
-                    // update view
-                    this.view.Update(this.level, this.player);
+                    UpdateModels();                   
 
                     // check whether the player finished
                     if (this.level.End.X == this.player.Position.X
@@ -159,37 +182,31 @@ namespace DosDungeon.Controller
                 }
                 else if (this.state == GameState.LevelFinished)
                 {
-                    if (this.enterDown || Keyboard.IsKeyDown(Key.Enter))
+                    if (this.enterDown)
                     {
                         this.enterDown = false;
                         InitLevel(this.levelSize);
                         this.state = GameState.Running;
                         this.level.State = GameState.Running;
                         COUNT_LEVEL++;
-                    }
-                    this.view.Update(this.level, this.player);
+                    }                    
                 }
                 else if (this.state == GameState.GameOver)
                 {
-                    if (this.enterDown || Keyboard.IsKeyDown(Key.Enter))
+                    if (this.enterDown)
                     {
                         COUNT_LEVEL = 1;
                         this.enterDown = false;
                         InitLevel(this.levelSize);
                         this.state = GameState.Running;
                         this.level.State = this.state;
-                    }
-                    this.view.Update(this.level, this.player);
+                        RestartSound();
+                    }                    
                 }
             }
-            else
-            {
-                //this.view.Update(this.level, this.player);
-                // register currently pressed keys only
-                RegisterKeyDown();
-                this.view.Update(this.level, this.player);
-            }
             
+            // update the view (draw new image)
+            this.view.Update(this.level, this.player);
         }
         #endregion // Update
 
@@ -298,7 +315,7 @@ namespace DosDungeon.Controller
         private void PlayerAction()
         {
             // only current action is to attack
-            if (this.attackDown | Keyboard.IsKeyDown(Key.Space))
+            if (this.attackDown)
             {
                 this.attackDown = false;
 
@@ -344,13 +361,7 @@ namespace DosDungeon.Controller
             {
                 m = this.nextMove;
                 this.nextMove = null;
-            }
-            else
-            {
-                m = GetMove(this.player);
-            }
-            if (m != null)
-            {
+
                 if (IsValidMove(m, this.level))
                 {
                     MakeMove(m, this.player, this.level);
@@ -364,6 +375,7 @@ namespace DosDungeon.Controller
                 }
             }
         }
+        
         #endregion // MovePlayer
 
         #region IsValidMove

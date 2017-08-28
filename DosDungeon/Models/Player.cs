@@ -37,6 +37,10 @@ namespace DosDungeon.Models
             {
                 return this.gold;
             }
+            set
+            {
+                this.gold = value;
+            }
         }
         
         internal void GoldUp(int amount)
@@ -54,6 +58,10 @@ namespace DosDungeon.Models
             get
             {
                 return this.monstersKilled;
+            }
+            set
+            {
+                this.monstersKilled = value;
             }
         }
     }

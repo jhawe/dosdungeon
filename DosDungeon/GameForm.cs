@@ -14,11 +14,13 @@ namespace DosDungeon
 {
     public partial class GameForm : Form
     {
+        #region Class member
         private Game game;
         private Timer timer;
         internal Bitmap gameView;
         private Stopwatch stopWatch = Stopwatch.StartNew();
         readonly TimeSpan TargetElapsedTime = TimeSpan.FromTicks(TimeSpan.TicksPerSecond / 60);
+        #endregion // Class Member
 
         #region Constructor
         /// <summary>
@@ -31,6 +33,9 @@ namespace DosDungeon
            ControlStyles.UserPaint |
            ControlStyles.AllPaintingInWmPaint |
            ControlStyles.DoubleBuffer, true);
+
+            // code for those eventhandlers borrowed and adapted from 
+            // https://stackoverflow.com/a/7835149
             this.ResizeEnd += new EventHandler(CreateBackBufferHandler);
             this.Load += new EventHandler(CreateBackBufferHandler);
             this.Paint += new PaintEventHandler(PaintHandler);

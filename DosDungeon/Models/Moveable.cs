@@ -10,7 +10,7 @@ namespace DosDungeon.Models
         /// </summary>                
         private int health;
         private Position position;
-        private const int MAXHEALTH = 5;        
+        internal const int MAXHEALTH = 5;        
         private Direction face;        
         #endregion // Class Member
 
@@ -40,6 +40,10 @@ namespace DosDungeon.Models
             get
             {
                 return this.health;
+            }
+            set
+            {
+                this.health = Math.Min(value, MAXHEALTH);
             }
         }
 
