@@ -153,6 +153,9 @@ namespace DosDungeon.Controller
         }
 
         #region ToggleSound
+        /// <summary>
+        /// toggle playing of sound effects
+        /// </summary>
         internal void ToggleSound()
         {
             this.sfxOn = !this.sfxOn;
@@ -160,6 +163,10 @@ namespace DosDungeon.Controller
         #endregion // ToggleSound
 
         #region PlaySound
+        /// <summary>
+        ///  play a single sound effect provided as a stream
+        /// </summary>
+        /// <param name="s"></param>
         internal void PlaySound(Stream s)
         {
             if (this.sfxOn)
@@ -182,7 +189,10 @@ namespace DosDungeon.Controller
             TimeSpan currentTime = stopWatch.Elapsed;
             TimeSpan elapsedTime = currentTime - lastTime;
 
-            // register currently pressed keys
+            // check on control keys
+            CheckControlKeys();
+
+            // register currently pressed action keys
             RegisterKeyDown();
 
             // check whether we have a turn
@@ -190,7 +200,8 @@ namespace DosDungeon.Controller
             {
                 // always instantly set the new direction
                 // the player is facing
-                MoveFighter(this.player);
+                MoveFighter(this.player);                
+                System.Threading.Thread.Sleep(100);
             }
 
             // only update after 0.4 seconds
@@ -259,11 +270,11 @@ namespace DosDungeon.Controller
         /// </summary>
         private void RegisterKeyDown()
         {
-            this.enterDown = Keyboard.IsKeyDown(Key.Enter);
-            this.attackDown = Keyboard.IsKeyDown(Key.Space);
+            this.enterDown = this.enterDown|Keyboard.IsKeyDown(Key.Enter);
+            this.attackDown = this.attackDown|Keyboard.IsKeyDown(Key.Space);
 
             Position m = GetMove(this.player);
-            if (m != null)
+            if (m != null && this.nextMove == null)
             {
                 this.nextMove = m;
             }
@@ -528,6 +539,27 @@ namespace DosDungeon.Controller
         }
         #endregion // GetMove
 
+        internal void CheckControlKeys()
+        {
+            // toggle sound
+            if (Keyboard.IsKeyDown(Key.S))
+            {
+                ToggleSound();
+                // sleep a bit to avoid several changes
+                // being generated in one go
+                System.Threading.Thread.Sleep(300);
+            }
+            // load next level
+            if (Keyboard.IsKeyDown(Key.N))
+            {
+                InitLevel(this.levelSize);
+                // sleep a bit to avoid several changes
+                // being generated in one go
+                System.Threading.Thread.Sleep(300);
+            }
+            
+        }
+
         #endregion // Methods
-    }
+    }    
 }
