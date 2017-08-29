@@ -27,11 +27,15 @@ namespace DosDungeon.Common
             return (GetDistance(p1.X, p1.Y, p2.X, p2.Y));
         }
         #endregion // GetDistance
-        
+
         internal static bool Adjacent(Position position1, Position position2)
         {
             return Statics.GetDistance(position1, position2) == 1;
         }
 
+        internal static bool SameField(Position p1, Position p2)
+        {
+            return p1.X == p2.X && p1.Y == p2.Y;
+        }
     }
 }

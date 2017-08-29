@@ -64,7 +64,7 @@
     <Compile Include="Abstracts\AView.cs" />
     <Compile Include="Models\Level.cs" />
     <Compile Include="Models\Monster.cs" />
-    <Compile Include="Models\Moveable.cs" />
+    <Compile Include="Models\Fighter.cs" />
     <Compile Include="Models\Position.cs" />
     <Compile Include="Models\Player.cs" />
     <Compile Include="Program.cs" />
@@ -120,6 +120,21 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\Player_Up.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Monster_Down.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Monster_Left.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Monster_Right.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Monster_Up.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Chest.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

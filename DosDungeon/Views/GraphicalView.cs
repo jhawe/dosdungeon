@@ -1,4 +1,5 @@
-﻿using DosDungeon.Controller;
+﻿using DosDungeon.Common;
+using DosDungeon.Controller;
 using DosDungeon.Interfaces;
 using DosDungeon.Models;
 using DosDungeon.Properties;
@@ -13,7 +14,7 @@ namespace DosDungeon.Views
 {
     class GraphicalView : AView
     {
-        private GameForm form;        
+        private GameForm form;
         // define the colors for the individual fields in the view
         // to be used instrad of real graphics for now
         private Color COLOR_PLAYER = Color.Blue;
@@ -38,7 +39,7 @@ namespace DosDungeon.Views
         internal static new AView Create(GameForm form)
         {
             GraphicalView view = new GraphicalView();
-            view.form = form;            
+            view.form = form;
             return (view);
         }
         #endregion // Create
@@ -49,7 +50,7 @@ namespace DosDungeon.Views
         /// </summary>
         /// <param name="level"></param>
         /// <param name="player"></param>
-        internal override void Update(Level level, Player player)
+        internal override void Update(Level level, Player player, List<Monster> mon)
         {
             if (this.form.gameView != null)
             {
@@ -61,7 +62,7 @@ namespace DosDungeon.Views
                 this.FIELD_SIZE = (int)Math.Floor(form.gameView.Size.Height / level.Size * 1.0);
 
                 // draw the field
-                
+
                 // show summary screen of level
                 if (level.State == GameState.LevelFinished)
                 {
@@ -94,8 +95,8 @@ namespace DosDungeon.Views
                 else
                 {
                     // temp image to draw the tiles on
-                    Image board = new Bitmap(level.Size * FIELD_SIZE, level.Size * FIELD_SIZE);
-                    Graphics gr = Graphics.FromImage(board);
+                    //Image board = new Bitmap(level.Size * FIELD_SIZE, level.Size * FIELD_SIZE);
+                    //Graphics gr = Graphics.FromImage(board);
 
                     // board
                     for (int i = 0; i < level.Size; i++)
@@ -116,14 +117,36 @@ namespace DosDungeon.Views
                             }
                             else
                             {
-                                img = GetImage(f, player.Face);
+                                // if we have a fighter field, we need to get the current
+                                // face of the fighter
+                                Fighter fi = null;
+                                if (f == Field.Monster && mon != null)
+                                {
+                                    foreach (Monster m in mon)
+                                    {
+                                        if (Statics.SameField(m.Position, new Position(i, j)))
+                                        {
+                                            fi = m;
+                                            break;
+                                        }
+                                    }
+                                }
+                                else if (f == Field.Player)
+                                {
+                                    fi = player;
+                                }
+                                // set a default direction (e.g. non-init monsters)
+                                Direction d = Direction.Down;
+                                if(fi != null)
+                                {
+                                    d = fi.Face;
+                                }
+                                img = GetImage(f, d);
                             }
-                            // draw the full image
-                            gr.DrawImage(img, rect);
+                            // draw the current field
+                            graphics.DrawImage(img, rect);
                         }
                     }
-                    // draw the temp image in one go to the main output
-                    graphics.DrawImage(board, new Point(0, 0));
                 }
                 this.form.Invalidate();
             }
@@ -160,18 +183,32 @@ namespace DosDungeon.Views
                         case Direction.Right:
                             img = Resources.Player_Right;
                             break;
-                            default: break;
+                        default: break;
                     }
-                    
                     break;
                 case Field.Monster:
-                    img = Resources.Monster;
+                    switch (d)
+                    {
+                        case Direction.Down:
+                            img = Resources.Monster_Down;
+                            break;
+                        case Direction.Up:
+                            img = Resources.Monster_Up;
+                            break;
+                        case Direction.Left:
+                            img = Resources.Monster_Left;
+                            break;
+                        case Direction.Right:
+                            img = Resources.Monster_Right;
+                            break;
+                        default: break;
+                    }
                     break;
                 case Field.Treasure:
-                    img = Resources.Crate;
+                    img = Resources.Chest;
                     break;
                 case Field.Blocked:
-                    img = Resources.Crate;
+                    img = Resources.Grass;
                     break;
                 case Field.Branch:
                 case Field.Free:

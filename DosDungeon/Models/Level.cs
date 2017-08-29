@@ -109,7 +109,7 @@ namespace DosDungeon.Models
             {
                 return this.monsterStarts;
             }
-        }      
+        }
 
         internal GameState State { get; set; }
 
@@ -125,15 +125,19 @@ namespace DosDungeon.Models
         /// <param name="x"></param>
         /// <param name="y"></param>
         /// <returns></returns>
-        internal bool IsFieldAccessible(int x, int y)
+        internal bool IsFieldAccessible(int x, int y, Type t)
         {
-            Field f = GetField(x, y);
-            if (f == Field.Branch ||
-                f == Field.Free || f == Field.Main || f == Field.Treasure)
+            Field field = GetField(x, y);
+            if (t.Equals(typeof(Player)))
             {
-                return true;
+                return (field == Field.Branch ||
+                    field == Field.Free || field == Field.Main || field == Field.Treasure);
             }
-            return false;
+            else
+            {
+                return (field == Field.Branch ||
+                field == Field.Free || field == Field.Main);
+            }
         }
         #endregion // IsFieldAccessible     
 
@@ -216,7 +220,7 @@ namespace DosDungeon.Models
         {
             return GetField(p.X, p.Y);
         }
-         
+
         internal Field GetField(int x, int y)
         {
             // out of bounds
@@ -253,33 +257,31 @@ namespace DosDungeon.Models
         }
         #endregion // SetField
 
-        #region SetPlayerPos
+        #region SetFighter
         /// <summary>
         /// Sets the position of the player to the current field
         /// </summary>
         /// <param name="pos">The position of the player to
         /// be set</param>
-        internal void SetPlayerPos(Position pos)
-        {
-            // reset previous player field to be free again
-            if (this.playerPos != null)
+        internal void SetFighter(Position nPos, Position oPos, Type ftype)
+        {          
+            if (ftype.Equals(typeof(Player)))
             {
-                this.field[this.playerPos.X, this.playerPos.Y] = this.playerField;
+                // could be null during init
+                if (oPos != null)
+                {
+                    this.field[oPos.X, oPos.Y] = (int)Field.Free;
+                }
+                this.field[nPos.X, nPos.Y] = (int)Field.Player;               
             }
-            this.playerField = this.field[pos.X, pos.Y];
-            // if the current field was a treasure field, it gets changed to a
-            // normal free field (main or branch does not matter in that case anymore)
-            if (this.playerField == (int)Field.Treasure)
+            else if(ftype.Equals(typeof(Monster)))
             {
-                this.playerField = (int)Field.Free;
+                this.field[oPos.X, oPos.Y] = (int)Field.Free;
+                this.field[nPos.X, nPos.Y] = (int)Field.Monster;
             }
-
-            this.field[pos.X, pos.Y] = (int)Field.Player;
-            this.playerPos = pos;
-
         }
-        #endregion // SetPlayerPos
-                
+        #endregion // SetFighter
+
         #endregion // Methods
     }
 }

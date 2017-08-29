@@ -72,6 +72,16 @@ namespace DosDungeon.Properties {
         /// <summary>
         ///   Sucht eine lokalisierte Ressource vom Typ System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap Chest {
+            get {
+                object obj = ResourceManager.GetObject("Chest", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Ressource vom Typ System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap Crate {
             get {
                 object obj = ResourceManager.GetObject("Crate", resourceCulture);
@@ -105,6 +115,46 @@ namespace DosDungeon.Properties {
         internal static System.Drawing.Bitmap Monster {
             get {
                 object obj = ResourceManager.GetObject("Monster", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Ressource vom Typ System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap Monster_Down {
+            get {
+                object obj = ResourceManager.GetObject("Monster_Down", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Ressource vom Typ System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap Monster_Left {
+            get {
+                object obj = ResourceManager.GetObject("Monster_Left", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Ressource vom Typ System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap Monster_Right {
+            get {
+                object obj = ResourceManager.GetObject("Monster_Right", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Ressource vom Typ System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap Monster_Up {
+            get {
+                object obj = ResourceManager.GetObject("Monster_Up", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }

@@ -52,7 +52,7 @@ namespace DosDungeon.Common
 
                     Field f = l.GetField(i, j);
                     float d = Statics.GetDistance(i, j, l.End.X, l.End.Y);
-                    if (l.IsFieldAccessible(i, j)
+                    if (l.IsFieldAccessible(i, j, typeof(Player))
                         && d < minFreeDist
                         && !(i == l.End.X && j == l.End.Y))
 
@@ -110,7 +110,7 @@ namespace DosDungeon.Common
                         if (GetDistances(i, j, lp)[0] > 3)
                         {
                             // check whether the field is accessible
-                            if (l.IsFieldAccessible(i, j))
+                            if (l.IsFieldAccessible(i, j, typeof(Monster)))
                             {
                                 // 5% chance to get a monster
                                 if (Game.RNG.NextDouble() < 0.05)
@@ -392,43 +392,44 @@ namespace DosDungeon.Common
         internal static int CountNeighbourAccessFields(Level level, Position m)
         {
             int c = 0;
-            if (level.IsFieldAccessible(m.X, m.Y - 1))
+            if (level.IsFieldAccessible(m.X, m.Y - 1, typeof(Player)))
             {
                 c++;
             }
-            if (level.IsFieldAccessible(m.X + 1, m.Y))
+            if (level.IsFieldAccessible(m.X + 1, m.Y, typeof(Player)))
             {
                 c++;
             }
-            if (level.IsFieldAccessible(m.X - 1, m.Y))
+            if (level.IsFieldAccessible(m.X - 1, m.Y, typeof(Player)))
             {
                 c++;
             }
-            if (level.IsFieldAccessible(m.X, m.Y + 1))
+            if (level.IsFieldAccessible(m.X, m.Y + 1, typeof(Player)))
             {
                 c++;
             }
             return c;
         }
 
-        internal static List<Position> GetNeighbourAccessFields(Level level, Position m)
+        internal static List<Position> GetNeighbourAccessFields(Level level, Fighter f)
         {
+            Position pos = f.Position;
             List<Position> result = new List<Position>();
-            if (level.IsFieldAccessible(m.X, m.Y - 1))
+            if (level.IsFieldAccessible(pos.X, pos.Y - 1, f.GetType()))
             {
-                result.Add(new Position(m.X, m.Y - 1));
+                result.Add(new Position(pos.X, pos.Y - 1));
             }
-            if (level.IsFieldAccessible(m.X + 1, m.Y))
+            if (level.IsFieldAccessible(pos.X + 1, pos.Y, f.GetType()))
             {
-                result.Add(new Position(m.X + 1, m.Y));
+                result.Add(new Position(pos.X + 1, pos.Y));
             }
-            if (level.IsFieldAccessible(m.X - 1, m.Y))
+            if (level.IsFieldAccessible(pos.X - 1, pos.Y, f.GetType()))
             {
-                result.Add(new Position(m.X - 1, m.Y));
+                result.Add(new Position(pos.X - 1, pos.Y));
             }
-            if (level.IsFieldAccessible(m.X, m.Y + 1))
+            if (level.IsFieldAccessible(pos.X, pos.Y + 1, f.GetType()))
             {
-                result.Add(new Position(m.X, m.Y + 1));
+                result.Add(new Position(pos.X, pos.Y + 1));
             }
             return result;
         }
@@ -680,7 +681,7 @@ namespace DosDungeon.Common
             return (result);
         }
         #endregion // GetDistances
-        
+
         #region GenerateNaive
         /// <summary>
         /// Generates a very naive level for testing purposes

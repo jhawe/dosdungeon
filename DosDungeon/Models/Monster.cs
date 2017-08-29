@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace DosDungeon.Models
 {
-    internal class Monster : Moveable
+    internal class Monster : Fighter
     {
         internal Monster(int health = 1) : base(health)
         {

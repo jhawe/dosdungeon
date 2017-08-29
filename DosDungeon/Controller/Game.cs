@@ -23,7 +23,7 @@ namespace DosDungeon.Controller
         private Player player = null;
         private Level level = null;
         private Position nextMove = null;
-        private int levelSize = 16;
+        private int levelSize = 10;
         private Stopwatch stopWatch;
         readonly TimeSpan TargetElapsedTime = TimeSpan.FromTicks(TimeSpan.TicksPerSecond / 120);
         readonly TimeSpan MaxElapsedTime = TimeSpan.FromTicks(TimeSpan.TicksPerSecond / 10);
@@ -49,7 +49,7 @@ namespace DosDungeon.Controller
         {
             // start music
             this.sp = new SoundPlayer(Properties.Resources.bg_music);
-            this.sp.Play();
+            //this.sp.Play();
 
             this.stopWatch = sw;
             this.player = new Player("Hans");
@@ -84,7 +84,7 @@ namespace DosDungeon.Controller
             // set player on the current board
             Position m = new Position(startX, startY);
             this.player.SetPosition(m);
-            this.level.SetPlayerPos(this.player.Position);
+            this.level.SetFighter(m, null, typeof(Player));
 
             // foreach monster field, we create a monster instance to
             // be able to manipulate them
@@ -94,28 +94,34 @@ namespace DosDungeon.Controller
             {
                 Monster mo = new Monster(1);
                 mo.SetPosition(ms);
+                SetInitFace(mo, ms);
                 this.monster.Add(mo);
             }
 
-            // set the player facing to one of the next free fields
-            if (this.level.IsFieldAccessible(m.X + 1, m.Y))
-            {
-                this.player.SetFace(GetMoveDirection(m, new Position(m.X + 1, m.Y)));
-            }
-            else if (this.level.IsFieldAccessible(m.X - 1, m.Y))
-            {
-                this.player.SetFace(GetMoveDirection(m, new Position(m.X - 1, m.Y)));
-            }
-            else if (this.level.IsFieldAccessible(m.X, m.Y + 1))
-            {
-                this.player.SetFace(GetMoveDirection(m, new Position(m.X, m.Y + 1)));
-            }
-            else if (this.level.IsFieldAccessible(m.X, m.Y - 1))
-            {
-                this.player.SetFace(GetMoveDirection(m, new Position(m.X, m.Y - 1)));
-            }
+            SetInitFace(this.player, m);
         }
         #endregion // InitLevel
+
+        private void SetInitFace(Fighter f, Position m)
+        {
+            // set the player facing to one of the next free fields
+            if (this.level.IsFieldAccessible(m.X + 1, m.Y, f.GetType()))
+            {
+                f.SetFace(GetMoveDirection(m, new Position(m.X + 1, m.Y)));
+            }
+            else if (this.level.IsFieldAccessible(m.X - 1, m.Y, f.GetType()))
+            {
+                f.SetFace(GetMoveDirection(m, new Position(m.X - 1, m.Y)));
+            }
+            else if (this.level.IsFieldAccessible(m.X, m.Y + 1, f.GetType()))
+            {
+                f.SetFace(GetMoveDirection(m, new Position(m.X, m.Y + 1)));
+            }
+            else if (this.level.IsFieldAccessible(m.X, m.Y - 1, f.GetType()))
+            {
+                f.SetFace(GetMoveDirection(m, new Position(m.X, m.Y - 1)));
+            }
+        }
 
         internal Direction GetMoveDirection(Position from, Position to)
         {
@@ -137,15 +143,15 @@ namespace DosDungeon.Controller
             }
         }
 
-        #region RestartSound
+        #region RestartBGSound
         /// <summary>
         /// Restarts the background sound from the beginning
         /// </summary>
-        internal void RestartSound()
+        internal void RestartBGSound()
         {
             this.sp.Play();
         }
-        #endregion // RestartSound
+        #endregion // RestartBGSound
 
         #region Update
         /// <summary>
@@ -167,11 +173,11 @@ namespace DosDungeon.Controller
             {
                 // always instantly set the new direction
                 // the player is facing
-                MovePlayer();
+                MoveFighter(this.player);
             }
 
-            // only update after 0.5 seconds
-            if (elapsedTime > TimeSpan.FromSeconds(0.3))
+            // only update after 0.4 seconds
+            if (elapsedTime > TimeSpan.FromSeconds(0.4))
             {
                 lastTime = currentTime;
 
@@ -208,20 +214,28 @@ namespace DosDungeon.Controller
                         InitLevel(this.levelSize);
                         this.state = GameState.Running;
                         this.level.State = this.state;
-                        RestartSound();
+                        RestartBGSound();
                     }
                 }
             }
 
             // update the view (draw new image)
-            this.view.Update(this.level, this.player);
+            this.view.Update(this.level, this.player, this.monster);
         }
         #endregion // Update
 
+        #region IsTurn
+        /// <summary>
+        /// Checks whether the move to a specific position p would indicate
+        /// a change of the face of the player
+        /// </summary>
+        /// <param name="p"></param>
+        /// <returns></returns>
         private bool IsTurn(Position p)
         {
             return p != null && GetMoveDirection(this.player.Position, p) != player.Face;
         }
+        #endregion // IsTurn
 
         #region RegisterKeyDown
         /// <summary>
@@ -233,7 +247,7 @@ namespace DosDungeon.Controller
             this.attackDown = Keyboard.IsKeyDown(Key.Space);
 
             Position m = GetMove(this.player);
-            if (m != null && IsValidMove(m, this.level))
+            if (m != null)
             {
                 this.nextMove = m;
             }
@@ -247,57 +261,33 @@ namespace DosDungeon.Controller
         private void UpdateModels()
         {
             PlayerAction();
-            MoveMonster();
+            MonsterAction();
         }
         #endregion // UpdateModels
 
-        #region MoveMonster
+        #region MonsterAction
         /// <summary>
         /// Moves monsters around the current level
         /// </summary>
-        private void MoveMonster()
+        private void MonsterAction()
         {
             foreach (Monster m in this.monster)
             {
-                // check whether we attack the player
+                // check whether we can attack the player
                 // if monster moves to player -> attack player; dont move
-                if (Statics.Adjacent(this.player.Position, m.Position))
+                if (Statics.SameField(this.player.Position, m.AttackField))
                 {
                     AttackPlayer(m);
                     continue;
                 }
-                // now just move the monster
-                List<Position> lp = LevelGenerator.GetNeighbourAccessFields(this.level, m.Position);
-
-                // should only very rarely be the case
-                if (lp.Count < 1)
-                {
-                    // do nothing continue
-                }
+                // perform some movement with 20%prob
                 if (Game.RNG.NextDouble() <= 0.2)
                 {
-                    // move towards player
-                    int minDist = LevelGenerator.GetMinDistMove(this.player.Position, lp);
-                    Position np = lp[minDist];
-
-                    // check face of the monster
-                    if (m.Face == GetMoveDirection(m.Position, np))
-                    {
-                        // move the monster
-                        // reset the field the monster was previously on
-                        this.level.SetField(m.Position, Field.Free);
-                        m.SetPosition(lp[minDist]);
-                        this.level.SetField(m.Position, Field.Monster);
-                    }
-                    else
-                    {
-                        // just set the new face
-                        m.SetFace(GetMoveDirection(m.Position, np));
-                    }
+                    MoveFighter(m);
                 }
             }
         }
-        #endregion // MoveMonster
+        #endregion // MonsterAction
 
         #region AttackPlayer
         /// <summary>
@@ -306,11 +296,12 @@ namespace DosDungeon.Controller
         /// <param name="m">The monster attacking the player.</param>
         private void AttackPlayer(Monster m)
         {
-            // hits with probability of 66%
-            if (RNG.NextDouble() <= 0.66)
+            // hits with probability of 50%
+            if (RNG.NextDouble() <= 0.5)
             {
                 // just reduce health
                 // TODO adjust amount by level/strength of monster?
+                // TODO make player invincable for a short time
                 this.player.HealthDown(1);
                 if (this.player.Health == 0)
                 {
@@ -331,7 +322,6 @@ namespace DosDungeon.Controller
             if (this.attackDown)
             {
                 this.attackDown = false;
-
                 // one attack currently kills monsters
                 Position af = this.player.AttackField;
                 Monster rm = null;
@@ -339,7 +329,7 @@ namespace DosDungeon.Controller
                 {
                     // check whether attack field and the current monster
                     // position overlap
-                    if (af.X == m.Position.X && af.Y == m.Position.Y)
+                    if (Statics.SameField(af, m.Position))
                     {
                         // remove monster from our list
                         rm = m;
@@ -357,39 +347,49 @@ namespace DosDungeon.Controller
             }
             else
             {
-                MovePlayer();
+                MoveFighter(this.player);
             }
         }
         #endregion // PayerAction
 
-        #region MovePlayer
+        #region MoveFighter
         /// <summary>
         /// Move the player to a new field based on which arrow key is currently pressed
         /// </summary>
-        private void MovePlayer()
+        private void MoveFighter(Fighter f)
         {
-            Position m;
-            // check for registered move first
-            if (this.nextMove != null)
+            Position m = null;
+            // check for registered move of player
+            if (this.nextMove != null && f.GetType().Equals(typeof(Player)))
             {
                 m = this.nextMove;
                 this.nextMove = null;
-
-                if (IsValidMove(m, this.level))
+            }
+            else if (f.GetType().Equals(typeof(Monster)))
+            {
+                // just move the monster
+                List<Position> lp = LevelGenerator.GetNeighbourAccessFields(this.level, f);
+                // move towards player
+                int minDist = LevelGenerator.GetMinDistMove(this.player.Position, lp);
+                m = lp[minDist];
+            }
+            if (m != null)
+            {
+                // check for valid move (free field and not against current face)
+                if (IsValidMove(m, this.level, f))
                 {
-                    MakeMove(m, this.player, this.level);
+                    MakeMove(m, f, this.level);
                 }
                 else
                 {
                     // not valid, but nevertheless change the
                     // direction the player is facing
-                    Direction dir = GetMoveDirection(this.player.Position, m);
-                    this.player.SetFace(dir);
+                    Direction dir = GetMoveDirection(f.Position, m);
+                    f.SetFace(dir);
                 }
             }
         }
-
-        #endregion // MovePlayer
+        #endregion // MoveFighter
 
         #region IsValidMove
         /// <summary>
@@ -398,9 +398,10 @@ namespace DosDungeon.Controller
         /// <param name="m">The move to be executed</param>
         /// <param name="l">The current level</param>
         /// <returns>True if move is valid, otherwise false</returns>
-        private bool IsValidMove(Position m, Level l)
+        private bool IsValidMove(Position m, Level l, Fighter f)
         {
-            if (l.IsFieldAccessible(m.X, m.Y))
+            if (l.IsFieldAccessible(m.X, m.Y, f.GetType())
+                && GetMoveDirection(f.Position, m) == f.Face)
             {
                 return true;
             }
@@ -413,26 +414,33 @@ namespace DosDungeon.Controller
         /// Executes a move of the player on the field
         /// </summary>
         /// <param name="m">The move</param>
-        /// <param name="p">The player</param>
+        /// <param name="f">The player</param>
         /// <param name="l">The board/field</param>
-        private void MakeMove(Position m, Player p, Level l)
+        private void MakeMove(Position m, Fighter f, Level l)
         {
-            Direction dir = GetMoveDirection(p.Position, m);
-            if (p.Face == dir)
+            Direction dir = GetMoveDirection(f.Position, m);
+            Position oldPos = f.Position;
+            // should always be the case if we come here!
+            if (f.Face == dir)
             {
                 // set the new position
-                p.SetPosition(m);
-                // check whether we found a treasure
-                if (l.GetField(p.Position.X, p.Position.Y) == Field.Treasure)
+                f.SetPosition(m);
+
+                // check whether we have the player here
+                if (f.GetType().Equals(typeof(Player)))
                 {
-                    OpenTreasure(p);
+                    // check whether we found a treasure
+                    if (l.GetField(f.Position.X, f.Position.Y) == Field.Treasure)
+                    {
+                        OpenTreasure(f as Player);
+                    }
                 }
-                l.SetPlayerPos(p.Position);
+                // set the new position of the entity on the board
+                l.SetFighter(m, oldPos, f.GetType());
             }
             else
             {
-                // only change direction
-                p.SetFace(dir);
+                throw new Exception("Sanity error: wrong move/face");
             }
         }
         #endregion // MakeMove

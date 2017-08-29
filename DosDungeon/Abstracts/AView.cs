@@ -1,5 +1,6 @@
 ﻿using DosDungeon.Models;
 using System;
+using System.Collections.Generic;
 
 namespace DosDungeon.Interfaces
 {
@@ -10,6 +11,6 @@ namespace DosDungeon.Interfaces
             throw new NotImplementedException();
         }
 
-        abstract internal void Update(Level level, Player player);        
+        abstract internal void Update(Level level, Player player, List<Monster> monster);        
     }
 }

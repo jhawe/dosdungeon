@@ -2,7 +2,7 @@
 
 namespace DosDungeon.Models
 {
-    internal class Moveable
+    internal class Fighter
     {
         #region Class Member
         /// <summary>
@@ -19,7 +19,7 @@ namespace DosDungeon.Models
         /// Constructor
         /// </summary>
         /// <param name="name">The player's name</param>
-        internal Moveable(int health = MAXHEALTH)
+        internal Fighter(int health = MAXHEALTH)
         {
             // member init            
             this.health = health;

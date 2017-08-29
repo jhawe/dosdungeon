@@ -2,6 +2,7 @@
 using DosDungeon.Interfaces;
 using System;
 using System.Text;
+using System.Collections.Generic;
 
 namespace DosDungeon.Views
 {
@@ -39,7 +40,7 @@ namespace DosDungeon.Views
         /// </summary>
         /// <param name="level">The currently played lavel</param>
         /// <param name="player">The current player instance</param>
-        internal override void Update(Level level, Player player)
+        internal override void Update(Level level, Player player, List<Monster> mon)
         {
             GameForm gf = this.gameForm;
             // NOT FUNCTIONAL ANYMORE!

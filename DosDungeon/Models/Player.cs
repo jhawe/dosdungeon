@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace DosDungeon.Models
 {
-    internal class Player : Moveable
+    internal class Player : Fighter
     {
         #region Class Member
         /// <summary>
