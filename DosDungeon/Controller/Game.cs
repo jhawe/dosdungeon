@@ -195,18 +195,21 @@ namespace DosDungeon.Controller
             // register currently pressed action keys
             RegisterKeyDown();
 
-            // check whether we have a turn
-            if (IsTurn(this.nextMove))
+            // immediately check whether we have a turn
+            Position m = GetMove(this.player);
+            if (IsTurn(m))
             {
+                this.nextMove = m;
                 // always instantly set the new direction
                 // the player is facing
                 MoveFighter(this.player);                
                 System.Threading.Thread.Sleep(100);
             }
 
-            // only update after 0.4 seconds
-            if (elapsedTime > TimeSpan.FromSeconds(0.4))
-            {
+            // only update after 0.3 seconds
+            if (elapsedTime > TimeSpan.FromSeconds(0.3))
+            {                
+                this.nextMove = m;
                 lastTime = currentTime;
 
                 if (this.state == GameState.Running)
@@ -276,7 +279,7 @@ namespace DosDungeon.Controller
             Position m = GetMove(this.player);
             if (m != null && this.nextMove == null)
             {
-                this.nextMove = m;
+                //this.nextMove = m;
             }
         }
         #endregion // RegisterKeyDown

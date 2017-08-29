@@ -277,6 +277,9 @@ namespace DosDungeon.Common
         private static void PopulateTreasures(Level l)
         {
             var b = l.Branches;
+            
+            bool genSingle = true;
+
             foreach (var branch in b)
             {
                 Position last = branch.Last.Value;
@@ -286,7 +289,15 @@ namespace DosDungeon.Common
                 if (r < 0.4 && l.IsEdgeField(last))
                 {
                     l.SetField(last.X, last.Y, Field.Treasure);
+                    // dont need to generate a treasure in the end
+                    genSingle = false;
                 }
+            }
+            // check whether we had at least one treasure
+            if (genSingle && b.Count > 0)
+            {
+                Position last = b[b.Count - 1].Last.Value;
+                l.SetField(last.X, last.Y, Field.Treasure);
             }
         }
         #endregion // PopulateTreasures       
@@ -450,41 +461,7 @@ namespace DosDungeon.Common
             }
             return minDistMoveIdx;
         }
-
-        #region GenerateRecursive
-
-        private static void GenerateRecursive(Level l)
-        {
-            // start recursion
-            GenerateStartEnd(l);
-            Position p = l.Start;
-            RGenRec(l, p);
-        }
-
-        private static void RGenRec(Level l, Position p, bool isBranch = false)
-        {
-            // TODO implement
-            Field toset = isBranch ? Field.Branch : Field.Main;
-
-            // random stop if branch
-            if (Game.RNG.NextDouble() < 0.33 && !isBranch)
-            {
-                l.SetField(p, toset);
-                return;
-            }
-
-            List<Position> pdirs = GetBlocked(l, p);
-            if (pdirs.Count > 0)
-            {
-                int midx = GetMinDistMove(l.End, pdirs);
-                Position minDistMove = pdirs[midx];
-
-            }
-            // branch randomly, also two side branching
-        }
-
-        #endregion // GenerateRecursive
-
+        
         #region GetBlocked
         /// <summary>
         /// For a level and a position, get the fields next to the position which are 
