@@ -70,12 +70,30 @@ namespace DosDungeon.Properties {
         }
         
         /// <summary>
+        ///   Sucht eine lokalisierte Ressource vom Typ System.IO.UnmanagedMemoryStream ähnlich wie System.IO.MemoryStream.
+        /// </summary>
+        internal static System.IO.UnmanagedMemoryStream bubble {
+            get {
+                return ResourceManager.GetStream("bubble", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Sucht eine lokalisierte Ressource vom Typ System.Drawing.Bitmap.
         /// </summary>
         internal static System.Drawing.Bitmap Chest {
             get {
                 object obj = ResourceManager.GetObject("Chest", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Ressource vom Typ System.IO.UnmanagedMemoryStream ähnlich wie System.IO.MemoryStream.
+        /// </summary>
+        internal static System.IO.UnmanagedMemoryStream coin {
+            get {
+                return ResourceManager.GetStream("coin", resourceCulture);
             }
         }
         
@@ -110,12 +128,11 @@ namespace DosDungeon.Properties {
         }
         
         /// <summary>
-        ///   Sucht eine lokalisierte Ressource vom Typ System.Drawing.Bitmap.
+        ///   Sucht eine lokalisierte Ressource vom Typ System.IO.UnmanagedMemoryStream ähnlich wie System.IO.MemoryStream.
         /// </summary>
-        internal static System.Drawing.Bitmap Monster {
+        internal static System.IO.UnmanagedMemoryStream interface1 {
             get {
-                object obj = ResourceManager.GetObject("Monster", resourceCulture);
-                return ((System.Drawing.Bitmap)(obj));
+                return ResourceManager.GetStream("interface1", resourceCulture);
             }
         }
         
@@ -160,12 +177,20 @@ namespace DosDungeon.Properties {
         }
         
         /// <summary>
-        ///   Sucht eine lokalisierte Ressource vom Typ System.Drawing.Bitmap.
+        ///   Sucht eine lokalisierte Ressource vom Typ System.IO.UnmanagedMemoryStream ähnlich wie System.IO.MemoryStream.
         /// </summary>
-        internal static System.Drawing.Bitmap Player {
+        internal static System.IO.UnmanagedMemoryStream ogre {
             get {
-                object obj = ResourceManager.GetObject("Player", resourceCulture);
-                return ((System.Drawing.Bitmap)(obj));
+                return ResourceManager.GetStream("ogre", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Ressource vom Typ System.IO.UnmanagedMemoryStream ähnlich wie System.IO.MemoryStream.
+        /// </summary>
+        internal static System.IO.UnmanagedMemoryStream ouch {
+            get {
+                return ResourceManager.GetStream("ouch", resourceCulture);
             }
         }
         
@@ -216,6 +241,15 @@ namespace DosDungeon.Properties {
             get {
                 object obj = ResourceManager.GetObject("Sand", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Ressource vom Typ System.IO.UnmanagedMemoryStream ähnlich wie System.IO.MemoryStream.
+        /// </summary>
+        internal static System.IO.UnmanagedMemoryStream swing {
+            get {
+                return ResourceManager.GetStream("swing", resourceCulture);
             }
         }
     }

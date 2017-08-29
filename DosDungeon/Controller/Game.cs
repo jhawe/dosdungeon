@@ -9,6 +9,7 @@ using System.IO;
 using System.Media;
 using System.Windows.Forms;
 using System.Windows.Input;
+using System.Windows.Media;
 
 namespace DosDungeon.Controller
 {
@@ -29,13 +30,18 @@ namespace DosDungeon.Controller
         readonly TimeSpan MaxElapsedTime = TimeSpan.FromTicks(TimeSpan.TicksPerSecond / 10);
         private TimeSpan lastTime;
         private List<Monster> monster;
-        // restart music
-        private SoundPlayer sp = null;
+
+        // music
+        //private SoundPlayer sp = null;
+        // sfx
+        private SoundPlayer sfx = null;
+
         // random number generator used for alls random processes in the game
         internal static Random RNG = new Random();
         internal static int COUNT_LEVEL = 1;
         private bool enterDown;
         private bool attackDown;
+        private bool sfxOn;
 
         #endregion // Class Member
 
@@ -48,11 +54,14 @@ namespace DosDungeon.Controller
         internal Game(GameForm gf, Stopwatch sw)
         {
             // start music
-            this.sp = new SoundPlayer(Properties.Resources.bg_music);
-            //this.sp.Play();
+            // this.sp = new SoundPlayer(Properties.Resources.bg_music);
+            // this.sp.PlayLooping();
+            this.sfxOn = true;
 
+            // member init
+            this.sfx = new SoundPlayer();
             this.stopWatch = sw;
-            this.player = new Player("Hans");
+            this.player = new Player("TheH3ro");
             this.monster = new List<Monster>();
 
             InitLevel(this.levelSize);
@@ -143,15 +152,23 @@ namespace DosDungeon.Controller
             }
         }
 
-        #region RestartBGSound
-        /// <summary>
-        /// Restarts the background sound from the beginning
-        /// </summary>
-        internal void RestartBGSound()
+        #region ToggleSound
+        internal void ToggleSound()
         {
-            this.sp.Play();
+            this.sfxOn = !this.sfxOn;
         }
-        #endregion // RestartBGSound
+        #endregion // ToggleSound
+
+        #region PlaySound
+        internal void PlaySound(Stream s)
+        {
+            if (this.sfxOn)
+            {
+                this.sfx.Stream = s;
+                this.sfx.Play();
+            }
+        }
+        #endregion // PlaySound
 
         #region Update
         /// <summary>
@@ -214,7 +231,6 @@ namespace DosDungeon.Controller
                         InitLevel(this.levelSize);
                         this.state = GameState.Running;
                         this.level.State = this.state;
-                        RestartBGSound();
                     }
                 }
             }
@@ -308,6 +324,7 @@ namespace DosDungeon.Controller
                     this.state = GameState.GameOver;
                     this.level.State = GameState.GameOver;
                 }
+                PlaySound(Properties.Resources.ouch);
             }
         }
         #endregion // AttackPlayer
@@ -337,6 +354,7 @@ namespace DosDungeon.Controller
                         this.player.MonstersKilledUp();
                         int gold = (int)Math.Min(10, RNG.NextDouble() * 100);
                         this.player.GoldUp(gold);
+                        PlaySound(Properties.Resources.ogre);
                         break;
                     }
                 }
@@ -369,9 +387,12 @@ namespace DosDungeon.Controller
             {
                 // just move the monster
                 List<Position> lp = LevelGenerator.GetNeighbourAccessFields(this.level, f);
-                // move towards player
-                int minDist = LevelGenerator.GetMinDistMove(this.player.Position, lp);
-                m = lp[minDist];
+                if (lp.Count > 0)
+                {
+                    // move towards player
+                    int minDist = LevelGenerator.GetMinDistMove(this.player.Position, lp);
+                    m = lp[minDist];
+                }
             }
             if (m != null)
             {
@@ -458,6 +479,8 @@ namespace DosDungeon.Controller
             if (r <= 0.25)
             {
                 p.HealthUp(1);
+                PlaySound(Properties.Resources.bubble);
+
             }
             else
             {
@@ -465,6 +488,7 @@ namespace DosDungeon.Controller
                 r = Game.RNG.NextDouble();
                 var amount = (int)Math.Ceiling(Math.Max(r * 100, 10));
                 p.GoldUp(amount);
+                PlaySound(Properties.Resources.coin);
             }
         }
         #endregion // OpenTreasure

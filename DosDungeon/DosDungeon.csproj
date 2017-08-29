@@ -136,5 +136,23 @@
   <ItemGroup>
     <None Include="Resources\Chest.png" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\interface1.wav" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\coin.wav" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\ogre1.wav" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\ouch.wav" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\bubble3.wav" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\swing.wav" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
