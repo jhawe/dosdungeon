@@ -94,10 +94,6 @@ namespace DosDungeon.Views
                 }
                 else
                 {
-                    // temp image to draw the tiles on
-                    //Image board = new Bitmap(level.Size * FIELD_SIZE, level.Size * FIELD_SIZE);
-                    //Graphics gr = Graphics.FromImage(board);
-
                     // board
                     for (int i = 0; i < level.Size; i++)
                     {
@@ -137,7 +133,7 @@ namespace DosDungeon.Views
                                 }
                                 // set a default direction (e.g. non-init monsters)
                                 Direction d = Direction.Down;
-                                if(fi != null)
+                                if (fi != null)
                                 {
                                     d = fi.Face;
                                 }
@@ -147,6 +143,7 @@ namespace DosDungeon.Views
                             graphics.DrawImage(img, rect);
                         }
                     }
+                    DrawHUD(graphics, player);
                 }
                 this.form.Invalidate();
             }
@@ -154,6 +151,37 @@ namespace DosDungeon.Views
         #endregion // Update
 
         #endregion // Implement IView
+
+        private void DrawHUD(Graphics graphics, Player player)
+        {
+            // size of the heart to be drawn
+            int s = 20;
+
+            // start point of heart containers, top left
+            int sx = 5;
+            int sy = 5;
+
+            // draw exactly player.Health hearts
+            for (int i = 0; i < Player.MAXHEALTH; i++)
+            {
+                if (i < player.Health)
+                {
+                    graphics.DrawImage(Resources.heart, new Rectangle(sx + i * s, sy, s, s));
+                }
+                else
+                {
+                    graphics.DrawImage(Resources.heart_empty, new Rectangle(sx + i * s, sy, s, s));
+                }
+            }
+
+            // display collected gold just below hearts
+            sx = 5;
+            sy += (s + 5);
+            graphics.DrawImage(Resources.coins, new Rectangle(sx, sy, s, s));
+            graphics.DrawString(player.Gold.ToString(), new Font(FontFamily.GenericSansSerif, 12, FontStyle.Bold),
+                new SolidBrush(Color.WhiteSmoke), sx + s + 5, sy);
+
+        }
 
         /// <summary>
         /// Gets the image to be drawn for the specified field

@@ -154,5 +154,14 @@
   <ItemGroup>
     <None Include="Resources\swing.wav" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\heart_full_32x32.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\coins.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\heart_empty.png" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

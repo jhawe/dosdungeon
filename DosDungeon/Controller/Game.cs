@@ -78,18 +78,20 @@ namespace DosDungeon.Controller
         /// Initializes a level of the specified size
         /// </summary>
         /// <param name="levelSize">The size of the level to init</param>
-        private void InitLevel(int levelSize)
+        private void InitLevel(int levelSize, bool resetPlayer = false)
         {
             // generate first level
             this.level = LevelGenerator.GenerateLevel(this.levelSize);
             int startX = level.Start.X;
             int startY = level.Start.Y;
 
-            // reset player stats
-            this.player.Health = 5;
-            this.player.Gold = 0;
-            this.player.MonstersKilled = 0;
-
+            if (resetPlayer)
+            {
+                // reset player stats
+                this.player.Health = 5;
+                this.player.Gold = 0;
+                this.player.MonstersKilled = 0;
+            }
             // set player on the current board
             Position m = new Position(startX, startY);
             this.player.SetPosition(m);
@@ -242,7 +244,7 @@ namespace DosDungeon.Controller
                     {
                         COUNT_LEVEL = 1;
                         this.enterDown = false;
-                        InitLevel(this.levelSize);
+                        InitLevel(this.levelSize, true);
                         this.state = GameState.Running;
                         this.level.State = this.state;
                     }
@@ -327,7 +329,7 @@ namespace DosDungeon.Controller
         private void AttackPlayer(Monster m)
         {
             // hits with probability of 50%
-            if (RNG.NextDouble() <= 0.5)
+            if (RNG.NextDouble() <= 0.4)
             {
                 // just reduce health
                 // TODO adjust amount by level/strength of monster?
