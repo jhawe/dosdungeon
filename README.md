@@ -16,7 +16,9 @@ All levels are randomly generated, i.e. the experience for each player will be a
 Controls
 ###
 
-Arrow-keys: Turn/Move player
-space: Attack monster (standing in front of you)
-n: Instantly load next level 
-s: toggle sound effects
+|key|action|
+|--|--|
+| Arrow-keys | Turn/Move player |
+| [space] | Attack monster (standing in front of you) |
+| [n] | Instantly load next level |
+| [s] | Toggle sound effects |
