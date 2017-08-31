@@ -40,4 +40,9 @@ Control is still a little bit clumsily implemented but nevertheless working (esp
 ###
 ## Art and SFX
 ###
-Art and sound effects were downloaded from www.opengameart.org and were not created on my own! Slight modifications took place in some cases, though.
+Credits for Art and sound effects go to www.opengameart.org and were not created on my own! Slight modifications took place in some cases, though. 
+Specifially
+sounds - https://opengameart.org/content/rpg-sound-pack
+graphics - https://opengameart.org/content/free-desert-platformer-tileset and https://opengameart.org/content/halloween-gift-for-oga 
+
+
