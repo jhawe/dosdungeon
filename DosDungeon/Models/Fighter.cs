@@ -2,6 +2,10 @@
 
 namespace DosDungeon.Models
 {
+    /// <summary>
+    /// A simple fighter, being able to be moved on the field
+    /// and has some health
+    /// </summary>
     public class Fighter
     {
         #region Class Member
@@ -10,8 +14,8 @@ namespace DosDungeon.Models
         /// </summary>                
         private int health;
         private Position position;
-        internal const int MAXHEALTH = 5;        
-        private Direction face;        
+        internal const int MAXHEALTH = 5;
+        private Direction face;
         #endregion // Class Member
 
         #region Constructor
@@ -27,14 +31,24 @@ namespace DosDungeon.Models
         }
         #endregion // Constructor
 
+        /// <summary>
+        /// Gets/setsThe fighters position
+        /// </summary>
         internal Position Position
         {
             get
             {
                 return this.position;
             }
+            set
+            {
+                this.position = value;
+            }
         }
 
+        /// <summary>
+        /// Gets/sets The fighters health
+        /// </summary>
         internal int Health
         {
             get
@@ -47,6 +61,11 @@ namespace DosDungeon.Models
             }
         }
 
+        #region AttackField
+        /// <summary>
+        /// Describes the field the fighter would attack
+        /// if he were to act so, i.e. the field the player is facing
+        /// </summary>
         internal Position AttackField
         {
             get
@@ -67,33 +86,37 @@ namespace DosDungeon.Models
                 }
             }
         }
+        #endregion
 
+        #region Face
+        /// <summary>
+        /// The direction the player is facing
+        /// </summary>
         public Direction Face
         {
             get
             {
                 return this.face;
             }
+            internal set
+            {
+                this.face = value;
+            }
         }
+        #endregion // Face
 
-        internal void SetPosition(Position m)
-        {
-            this.position = m;
-        }
-
-        internal void SetFace(Direction dir)
-        {
-            this.face = dir;
-        }
-
+        #region HealthUp
         internal void HealthUp(int v)
         {
             this.health = Math.Min(MAXHEALTH, this.health + v);
         }
+        #endregion // HealthUp
 
+        #region HealthDown
         internal void HealthDown(int v)
         {
             this.health = Math.Max(0, this.health - v);
-        }        
+        }
+        #endregion // HealthDown
     }
 }

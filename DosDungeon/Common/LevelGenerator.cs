@@ -7,30 +7,28 @@ using System.Linq;
 
 namespace DosDungeon.Common
 {
+    /// <summary>
+    /// Static class for everything related to level generation
+    /// </summary>
     public static class LevelGenerator
     {
         #region Methods
 
         #region GenerateLevel
         /// <summary>
-        /// Generates a new random level of the specified size
+        /// Main method for generating levels.
+        /// Generates a new random level of the specified size using a main path
+        /// and adding branching paths later on
         /// </summary>
         /// <param name="size">the size of the level to generate (square)</param>
         /// <returns>A new level instance</returns>
         public static Level GenerateLevel(int size = 32)
         {
             Level l = new Level(size);
-            if (false)
-            {
-                //GenerateNaive(l);
-                //GenerateRecursive(l);
-            }
-            else
-            {
-                GeneratePath(l);
-                GenerateBranches(l);
-            }
-
+            // generate 'free' fields        
+            GeneratePath(l);
+            GenerateBranches(l);
+            // populate with treasures and monsters
             PopulateTreasures(l);
             PopulateMonsters(l);
 
@@ -40,11 +38,12 @@ namespace DosDungeon.Common
 
         #region CheckPathNaive
         /// <summary>
-        /// Checks whether the main
+        /// Checks whether the free fields connect to the end.
+        /// If not, path will be extended to the end
         /// </summary>
         /// <param name="l"></param>
         /// <param name="generate"></param>
-        private static void CheckPathNaive(Level l, bool generate = false)
+        private static void CheckPathNaive(Level l)
         {
             // temp vars to check min dist
             float minFreeDist = float.MaxValue;
@@ -55,7 +54,6 @@ namespace DosDungeon.Common
             {
                 for (int j = 0; j < l.Size; j++)
                 {
-
                     Field f = l.GetField(i, j);
                     float d = Statics.GetDistance(i, j, l.End.X, l.End.Y);
                     if (l.IsFieldAccessible(i, j, typeof(Player))
@@ -76,17 +74,19 @@ namespace DosDungeon.Common
             }
             // starting from the mindistposition, finish the path to the 
             // end position
-            bool proceed = generate;
+            bool proceed = true;
             Position current = minDistPos;
             while (proceed)
             {
                 List<Position> ppos = GetBlocked(l, current);
                 if (ppos.Count < 1)
                 {
-                    int i = 0;
+                    throw new Exception("Cannot go to the end when generating level!");
                 }
                 else
                 {
+                    // we always simply choose the mindist move 
+                    // as the next field
                     int minDistIdx = GetMinDistMove(l.End, ppos);
                     current = ppos[minDistIdx];
                     if (Statics.SameField(current, l.End))
@@ -100,44 +100,6 @@ namespace DosDungeon.Common
         }
         #endregion // CheckPathNaive
 
-        #region PopulateMonsters
-        /// <summary>
-        /// For a completely generated level, populates the level
-        /// with a random number of monsters
-        /// </summary>
-        /// <param name="l"></param>
-        private static void PopulateMonsters(Level l)
-        {
-            // set one random monster
-            for (int i = 0; i < l.Size; i++)
-            {
-                for (int j = 0; j < l.Size; j++)
-                {
-                    // dont put a monster on the end for now
-                    if (i != l.End.X && j != l.End.Y)
-                    {
-                        // dont put monster to near to the start
-                        List<Position> lp = new List<Position>(1);
-                        lp.Add(l.Start);
-                        if (GetDistances(i, j, lp)[0] > 3)
-                        {
-                            // check whether the field is accessible
-                            if (l.IsFieldAccessible(i, j, typeof(Monster)))
-                            {
-                                // 5% chance to get a monster
-                                if (Game.RNG.NextDouble() < 0.05)
-                                {
-                                    Position n = new Position(i, j);
-                                    l.AddMonster(n);
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        #endregion // PopulateMonsters
-
         #region GenerateBranches
         /// <summary>
         /// Generates random branches away from the main path of
@@ -150,17 +112,12 @@ namespace DosDungeon.Common
             // iterate over all positions of the main 
             // path
             var main = l.Main;
-            var ml = main.Count;
-            // define a chance to get a branch dependent on the
-            // main path's length
-
-            // gets higher the longer the path
-            var c = (1 - (1.0 / ml)) * 0.5;
 
             foreach (Position p in main)
             {
                 var r = Game.RNG.NextDouble();
-                if (c < r)
+                // 10% chance to sprout new branch
+                if (r <= 0.5)
                 {
                     Console.WriteLine("Creating new branch.");
                     GrowBranch(l, p);
@@ -183,10 +140,11 @@ namespace DosDungeon.Common
             bool proceed = true;
             while (proceed)
             {
-                // 5% chance to just stop where we are
+                // 10% chance to just stop where we are
                 // if we walked at least l.size/2 fields
+                // or arrive at an edgefield
                 var r = Game.RNG.NextDouble();
-                if (r < 0.1 && b.Count >= l.Size / 2 && l.IsEdgeField(current))
+                if (r < 0.1 && b.Count >= l.Size / 2 || l.IsEdgeField(current))
                 {
                     proceed = false;
                 }
@@ -238,6 +196,7 @@ namespace DosDungeon.Common
                 }
                 if (proceed)
                 {
+                    // remove unwanted fields
                     if (rm.Count > 0)
                     {
                         foreach (Position p1 in rm)
@@ -274,12 +233,54 @@ namespace DosDungeon.Common
                     }
                 }
             }
+            // we had a branch, add it to the level
             if (b.Count > 0)
             {
                 l.AddBranch(b);
             }
         }
         #endregion // GrowBranch
+
+
+        #region PopulateMonsters
+        /// <summary>
+        /// For a completely generated level, populates the level
+        /// with a random number of monsters
+        /// </summary>
+        /// <param name="l"></param>
+        private static void PopulateMonsters(Level l)
+        {
+            // set one random monster
+            for (int i = 0; i < l.Size; i++)
+            {
+                for (int j = 0; j < l.Size; j++)
+                {
+                    // dont put a monster on the end or start for now
+                    if (i != l.End.X && j != l.End.Y
+                        && i != l.Start.X && j != l.Start.Y)
+                    {
+                        // dont put monster too near to the start
+                        List<Position> lp = new List<Position>(1);
+                        lp.Add(l.Start);
+                        if (GetDistances(i, j, lp)[0] > 3)
+                        {
+                            // check whether the field is accessible
+                            if (l.IsFieldAccessible(i, j, typeof(Monster)))
+                            {
+                                // In addition a 10% chance to get a monster,
+                                // the first one is free ;)
+                                if (Game.RNG.NextDouble() < 0.1 || l.MonsterStarts.Count<1)
+                                {
+                                    Position n = new Position(i, j);
+                                    l.AddMonster(n);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        #endregion // PopulateMonsters
 
         #region PopulateTreasures
         /// <summary>
@@ -307,6 +308,7 @@ namespace DosDungeon.Common
                 }
             }
             // check whether we had at least one treasure
+            // if not generate one
             if (genSingle && b.Count > 0)
             {
                 Position last = b[b.Count - 1].Last.Value;
@@ -363,7 +365,7 @@ namespace DosDungeon.Common
                 if (proceed)
                 {
                     // choose a random move
-                    current = ChooseMove(l, pmoves, minDistMoveIdx);
+                    current = ChooseField(l, pmoves, minDistMoveIdx);
                 }
                 // set the new field for the main path
                 l.SetField(current, Field.Main);
@@ -371,16 +373,25 @@ namespace DosDungeon.Common
             }
             // check whether we have a connected path 
             // and generate one if necessary
-            CheckPathNaive(l, true);
+            CheckPathNaive(l);
         }
         #endregion // GeneratePath
 
-        private static Position ChooseMove(Level level, List<Position> pmoves, int minDistMoveIdx)
+        #region ChooseField
+        /// <summary>
+        /// Chooses the next field (during level generation) from a list of possible moves,
+        /// given also the move with the minimal distance to the end
+        /// </summary>
+        /// <param name="level"></param>
+        /// <param name="pmoves"></param>
+        /// <param name="endMinDist"></param>
+        /// <returns></returns>
+        private static Position ChooseField(Level level, List<Position> pmoves, int endMinDist)
         {
             // TODO make a random choice, slightly favored to the 
             // minDistMove
             double r = Game.RNG.NextDouble();
-            Position minDistMove = pmoves[minDistMoveIdx];
+            Position minDistMove = pmoves[endMinDist];
             Position c = null;
             if (pmoves.Count == 4)
             {
@@ -404,6 +415,7 @@ namespace DosDungeon.Common
             {
                 c = pmoves[0];
             }
+
             // extra chance for moves with only one neighbouring 
             // free field
             foreach (Position m in pmoves)
@@ -415,14 +427,24 @@ namespace DosDungeon.Common
                     break;
                 }
             }
+
             // extra chance for mindistmove
-            if (Game.RNG.NextDouble() < 0.1)
+            if (Game.RNG.NextDouble() < 0.2)
             {
                 c = minDistMove;
             }
             return c;
         }
+        #endregion // ChooseField
 
+        #region CountNeighbourAccessFields
+        /// <summary>
+        /// Counts the number of neighbouring accessible fields for a specific 
+        /// position
+        /// </summary>
+        /// <param name="level"></param>
+        /// <param name="m"></param>
+        /// <returns></returns>
         internal static int CountNeighbourAccessFields(Level level, Position m)
         {
             int c = 0;
@@ -444,13 +466,22 @@ namespace DosDungeon.Common
             }
             return c;
         }
+        #endregion // CountNeighbourAccessFields
 
+        #region GetNeighbourAccessFields
+        /// <summary>
+        /// Gets the fields next to a specific figher, which can be accessed by the fighter,
+        /// i.e. free fields which are not blocked
+        /// </summary>
         public static List<Position> GetNeighbourAccessFields(Level level, Fighter f, bool ignoreMonster = false)
         {
             Position pos = f.Position;
             return GetNeighbourAccessFields(level, f.Position, f.GetType(), ignoreMonster);
         }
-
+        /// <summary>
+        /// Gets the fields next to a specific position, which can be accessed by a fighter specified
+        /// by the givne type        
+        /// </summary>
         public static List<Position> GetNeighbourAccessFields(Level level, Position pos, Type t, bool ignoreMonster = false)
         {
             List<Position> result = new List<Position>();
@@ -472,6 +503,16 @@ namespace DosDungeon.Common
             }
             return result;
         }
+        #endregion // GetNeighbourAccessFields
+
+        #region GetMinDistMove
+        /// <summary>
+        /// Gets the move with the minimal distance to the reference
+        /// from a list of possible moves
+        /// </summary>
+        /// <param name="reference"></param>
+        /// <param name="choices"></param>
+        /// <returns></returns>
         internal static int GetMinDistMove(Position reference, List<Position> choices)
         {
             // get distances to end position on the field
@@ -488,6 +529,7 @@ namespace DosDungeon.Common
             }
             return minDistMoveIdx;
         }
+        #endregion // GetMinDistMove
 
         #region GetBlocked
         /// <summary>
@@ -508,14 +550,6 @@ namespace DosDungeon.Common
             int y = pos.Y;
 
             List<Position> result = new List<Position>();
-
-            // check whether the next move would be the end position
-            //   if (Math.Abs(l.End.X - x) == 1 && Math.Abs(l.End.Y - y) == 0
-            //       || Math.Abs(l.End.X - x) == 0 && Math.Abs(l.End.Y - y) == 1)
-            //   {
-            //       result.Add(new Position(l.End.X, l.End.Y));
-            //       return result;
-            //   }
 
             // bottom
             int x1 = x + 1;
@@ -555,43 +589,7 @@ namespace DosDungeon.Common
 
             return (result);
         }
-        #endregion // GetBlocked
-
-        #region IsMoveTowardsEnd
-        /// <summary>
-        /// Checks whether a move is directed towards the end field of a level
-        /// based on the previous position and the next position
-        /// </summary>
-        /// <param name="l">The level</param>
-        /// <param name="xp">Previous x</param>
-        /// <param name="yp">Previous y</param>
-        /// <param name="xn">Next x</param>
-        /// <param name="yn">Next y</param>
-        /// <returns></returns>
-        private static bool IsMoveTowardsEnd(Level l, int xp, int yp, int xn, int yn)
-        {
-            return (Statics.GetDistance(l.End.X, l.End.Y, xn, yn)
-                <= Statics.GetDistance(l.End.X, l.End.Y, xp, yn));
-        }
-        #endregion // IsMoveTowardsEnd
-
-        #region IsMoveTowardsStart
-        /// <summary>
-        /// Checks whether a move is directed towards the start field of a level
-        /// based on the previous position and the next position
-        /// </summary>
-        /// <param name="l">The level</param>
-        /// <param name="xp">Previous x</param>
-        /// <param name="yp">Previous y</param>
-        /// <param name="xn">Next x</param>
-        /// <param name="yn">Next y</param>
-        /// <returns></returns>
-        private static bool IsMoveTowardsStart(Level l, int xp, int yp, int xn, int yn)
-        {
-            return (Math.Abs(xn - l.Start.X) < Math.Abs(xp - l.Start.X) ||
-                Math.Abs(yn - l.Start.Y) < Math.Abs(yp - l.Start.Y));
-        }
-        #endregion // IsMoveTowardsStart
+        #endregion // GetBlocked            
 
         #region GenerateStartEnd
         /// <summary>
@@ -688,7 +686,7 @@ namespace DosDungeon.Common
 
         #region GenerateNaive
         /// <summary>
-        /// Generates a very naive level for testing purposes
+        /// Generates a very naive level for initial testing purposes
         /// </summary>
         /// <param name="l"></param>
         private static void GenerateNaive(Level l)
@@ -724,6 +722,7 @@ namespace DosDungeon.Common
             l.SetStart(new Position(0, 0));
         }
         #endregion // GenerateNaive
+
         #endregion // Methods
     }
 }

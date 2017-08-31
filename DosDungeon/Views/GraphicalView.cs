@@ -152,6 +152,12 @@ namespace DosDungeon.Views
 
         #endregion // Implement IView
 
+        #region DrawHUD
+        /// <summary>
+        /// Draws a simple hud with player stats on the screen
+        /// </summary>
+        /// <param name="graphics"></param>
+        /// <param name="player"></param>
         private void DrawHUD(Graphics graphics, Player player)
         {
             // size of the heart to be drawn
@@ -182,6 +188,7 @@ namespace DosDungeon.Views
                 new SolidBrush(Color.WhiteSmoke), sx + s + 5, sy);
 
         }
+        #endregion // DrawHUD
 
         /// <summary>
         /// Gets the image to be drawn for the specified field
@@ -251,7 +258,7 @@ namespace DosDungeon.Views
 
         #region GetColor
         /// <summary>
-        /// Gets the representative color for a specific field
+        /// DEPRECATED: Gets the representative color for a specific field
         /// </summary>
         /// <param name="f"></param>
         /// <returns></returns>

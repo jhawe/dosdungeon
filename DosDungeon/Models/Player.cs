@@ -6,6 +6,10 @@ using System.Threading.Tasks;
 
 namespace DosDungeon.Models
 {
+    /// <summary>
+    /// Class representing the hero/player. Has a name, Able to kill monsters
+    /// and can gather gold/points.
+    /// </summary>
     public class Player : Fighter
     {
         #region Class Member

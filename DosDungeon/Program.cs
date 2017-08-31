@@ -20,6 +20,7 @@ namespace DosDungeon
 
         private static void Application_ThreadException(object sender, System.Threading.ThreadExceptionEventArgs e)
         {
+            // for debugging
             int i = 0;
         }
     }

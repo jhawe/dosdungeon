@@ -167,14 +167,19 @@ namespace DosDungeon.Models
             }
             this.branches.Add(b);
         }
+        #endregion // AddBranch
 
+        #region AddMonster
+        /// <summary>
+        /// Adds a monster start to the level
+        /// </summary>
+        /// <param name="n"></param>
         internal void AddMonster(Position n)
         {
             this.monsterStarts.Add(n);
             SetField(n, Field.Monster);
-        }
-
-        #endregion // AddBranch
+        } 
+        #endregion // AddMonster
 
         #region IsEdgeField
         /// <summary>

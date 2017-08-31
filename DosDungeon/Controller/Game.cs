@@ -13,6 +13,9 @@ using System.Windows.Media;
 
 namespace DosDungeon.Controller
 {
+    /// <summary>
+    /// Controller / logic for the game, the main class handling all that is happening
+    /// </summary>
     internal class Game
     {
         #region Class Member
@@ -33,6 +36,7 @@ namespace DosDungeon.Controller
 
         // music
         //private SoundPlayer sp = null;
+
         // sfx
         private SoundPlayer sfx = null;
 
@@ -80,21 +84,22 @@ namespace DosDungeon.Controller
         /// <param name="levelSize">The size of the level to init</param>
         private void InitLevel(int levelSize, bool resetPlayer = false)
         {
-            // generate first level
+            // generate level first
             this.level = LevelGenerator.GenerateLevel(this.levelSize);
             int startX = level.Start.X;
             int startY = level.Start.Y;
 
+            // check whether to reset player stats
             if (resetPlayer)
             {
-                // reset player stats
                 this.player.Health = 5;
                 this.player.Gold = 0;
                 this.player.MonstersKilled = 0;
             }
+
             // set player on the current board
             Position m = new Position(startX, startY);
-            this.player.SetPosition(m);
+            this.player.Position = m;
             this.level.SetFighter(m, null, typeof(Player));
 
             // foreach monster field, we create a monster instance to
@@ -104,55 +109,44 @@ namespace DosDungeon.Controller
             foreach (Position ms in this.level.MonsterStarts)
             {
                 Monster mo = new Monster(1);
-                mo.SetPosition(ms);
+                mo.Position = ms;
                 SetInitFace(mo, ms);
                 this.monster.Add(mo);
             }
 
+            // set the initial face direction of the player
             SetInitFace(this.player, m);
         }
         #endregion // InitLevel
 
+        #region SetInitFace
+        /// <summary>
+        /// Sets the initial face of a fighter on a level,
+        /// checking which nearby fields are accessible
+        /// </summary>
+        /// <param name="f"></param>
+        /// <param name="m"></param>
         private void SetInitFace(Fighter f, Position m)
         {
             // set the player facing to one of the next free fields
             if (this.level.IsFieldAccessible(m.X + 1, m.Y, f.GetType()))
             {
-                f.SetFace(GetMoveDirection(m, new Position(m.X + 1, m.Y)));
+                f.Face = (Statics.GetMoveDirection(m, new Position(m.X + 1, m.Y)));
             }
             else if (this.level.IsFieldAccessible(m.X - 1, m.Y, f.GetType()))
             {
-                f.SetFace(GetMoveDirection(m, new Position(m.X - 1, m.Y)));
+                f.Face = (Statics.GetMoveDirection(m, new Position(m.X - 1, m.Y)));
             }
             else if (this.level.IsFieldAccessible(m.X, m.Y + 1, f.GetType()))
             {
-                f.SetFace(GetMoveDirection(m, new Position(m.X, m.Y + 1)));
+                f.Face = (Statics.GetMoveDirection(m, new Position(m.X, m.Y + 1)));
             }
             else if (this.level.IsFieldAccessible(m.X, m.Y - 1, f.GetType()))
             {
-                f.SetFace(GetMoveDirection(m, new Position(m.X, m.Y - 1)));
+                f.Face = (Statics.GetMoveDirection(m, new Position(m.X, m.Y - 1)));
             }
         }
-
-        internal Direction GetMoveDirection(Position from, Position to)
-        {
-            if (from.X < to.X)
-            {
-                return Direction.Down;
-            }
-            else if (from.X > to.X)
-            {
-                return Direction.Up;
-            }
-            else if (from.Y < to.Y)
-            {
-                return Direction.Right;
-            }
-            else
-            {
-                return Direction.Left;
-            }
-        }
+        #endregion // SetInitFace
 
         #region ToggleSound
         /// <summary>
@@ -199,7 +193,7 @@ namespace DosDungeon.Controller
 
             // immediately check whether we have a turn
             Position m = GetMove(this.player);
-            if (IsTurn(m))
+            if (Statics.IsTurn(this.player.Position, this.player.Face, m))
             {
                 this.nextMove = m;
                 // always instantly set the new direction
@@ -211,12 +205,13 @@ namespace DosDungeon.Controller
             // only update after 0.3 seconds
             if (elapsedTime > TimeSpan.FromSeconds(0.3))
             {
-                this.nextMove = m;
                 lastTime = currentTime;
+                // set the next move which we have registered before
+                this.nextMove = m;
 
                 if (this.state == GameState.Running)
                 {
-                    // update data
+                    // update logic
                     UpdateModels();
 
                     // check whether the player finished
@@ -226,14 +221,12 @@ namespace DosDungeon.Controller
                         this.state = GameState.LevelFinished;
                         this.level.State = GameState.LevelFinished;
                     }
-                    // reset any remembered keydowns which have not yet been reset
-                    ResetKeys();
                 }
                 else if (this.state == GameState.LevelFinished)
                 {
+                    // if enter is pressed, start new level
                     if (this.enterDown)
                     {
-                        this.enterDown = false;
                         InitLevel(this.levelSize);
                         this.state = GameState.Running;
                         this.level.State = GameState.Running;
@@ -245,12 +238,13 @@ namespace DosDungeon.Controller
                     if (this.enterDown)
                     {
                         COUNT_LEVEL = 1;
-                        this.enterDown = false;
                         InitLevel(this.levelSize, true);
                         this.state = GameState.Running;
                         this.level.State = this.state;
                     }
                 }
+                // reset any remembered keydowns which have not yet been reset
+                ResetKeys();
             }
 
             // update the view (draw new image)
@@ -259,25 +253,15 @@ namespace DosDungeon.Controller
         #endregion // Update
 
         #region ResetKeys
+        /// <summary>
+        /// Resets some meta-keys
+        /// </summary>
         private void ResetKeys()
         {
             this.enterDown = false;
             this.attackDown = false;
         }
         #endregion // ResetKeys
-
-        #region IsTurn
-        /// <summary>
-        /// Checks whether the move to a specific position p would indicate
-        /// a change of the face of the player
-        /// </summary>
-        /// <param name="p"></param>
-        /// <returns></returns>
-        private bool IsTurn(Position p)
-        {
-            return p != null && GetMoveDirection(this.player.Position, p) != player.Face;
-        }
-        #endregion // IsTurn
 
         #region RegisterKeyDown
         /// <summary>
@@ -417,7 +401,7 @@ namespace DosDungeon.Controller
             if (m != null)
             {
                 // check for valid move (free field and not against current face)
-                if (IsValidMove(m, this.level, f))
+                if (Statics.IsValidMove(m, this.level, f))
                 {
                     MakeMove(m, f, this.level);
                 }
@@ -425,30 +409,12 @@ namespace DosDungeon.Controller
                 {
                     // not valid, but nevertheless change the
                     // direction the player is facing
-                    Direction dir = GetMoveDirection(f.Position, m);
-                    f.SetFace(dir);
+                    Direction dir = Statics.GetMoveDirection(f.Position, m);
+                    f.Face = (dir);
                 }
             }
         }
-        #endregion // MoveFighter
-
-        #region IsValidMove
-        /// <summary>
-        /// Checks whether a move to be executed is valid
-        /// </summary>
-        /// <param name="m">The move to be executed</param>
-        /// <param name="l">The current level</param>
-        /// <returns>True if move is valid, otherwise false</returns>
-        private bool IsValidMove(Position m, Level l, Fighter f)
-        {
-            if (l.IsFieldAccessible(m.X, m.Y, f.GetType())
-                && GetMoveDirection(f.Position, m) == f.Face)
-            {
-                return true;
-            }
-            return false;
-        }
-        #endregion // IsValidMove
+        #endregion // MoveFighter     
 
         #region MakeMove
         /// <summary>
@@ -459,13 +425,13 @@ namespace DosDungeon.Controller
         /// <param name="l">The board/field</param>
         private void MakeMove(Position m, Fighter f, Level l)
         {
-            Direction dir = GetMoveDirection(f.Position, m);
+            Direction dir = Statics.GetMoveDirection(f.Position, m);
             Position oldPos = f.Position;
             // should always be the case if we come here!
             if (f.Face == dir)
             {
                 // set the new position
-                f.SetPosition(m);
+                f.Position = m;
 
                 // check whether we have the player here
                 if (f.GetType().Equals(typeof(Player)))
@@ -488,7 +454,8 @@ namespace DosDungeon.Controller
 
         #region OpenTreasure
         /// <summary>
-        /// Open a treasure for the specified player
+        /// Open a treasure for the specified player, yields either some
+        /// coins or a heart
         /// </summary>
         /// <param name="p">The player opening the treasure</param>
         private void OpenTreasure(Player p)
@@ -500,13 +467,12 @@ namespace DosDungeon.Controller
             {
                 p.HealthUp(1);
                 PlaySound(Properties.Resources.bubble);
-
             }
             else
             {
-                // give at least 10 gold, up to maximal 100
+                // give at least 10 gold, up to maximal 50
                 r = Game.RNG.NextDouble();
-                var amount = (int)Math.Ceiling(Math.Max(r * 100, 10));
+                var amount = (int)Math.Ceiling(Math.Max(r * 50, 10));
                 p.GoldUp(amount);
                 PlaySound(Properties.Resources.coin);
             }
@@ -548,6 +514,10 @@ namespace DosDungeon.Controller
         }
         #endregion // GetMove
 
+        #region CheckControlKeys
+        /// <summary>
+        /// Checks whether one of the control keys is pressed and reacts to it
+        /// </summary>
         internal void CheckControlKeys()
         {
             // toggle sound
@@ -568,6 +538,7 @@ namespace DosDungeon.Controller
             }
 
         }
+        #endregion // CheckControlKeys
 
         #endregion // Methods
     }

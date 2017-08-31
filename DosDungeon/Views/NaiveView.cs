@@ -6,6 +6,7 @@ using System.Collections.Generic;
 
 namespace DosDungeon.Views
 {
+    // DEPRECATED VIEW
     internal class NaiveView : AView
     {
         const char BORDER = '#';
