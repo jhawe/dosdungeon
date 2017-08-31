@@ -445,29 +445,33 @@ namespace DosDungeon.Common
             return c;
         }
 
-        internal static List<Position> GetNeighbourAccessFields(Level level, Fighter f)
+        public static List<Position> GetNeighbourAccessFields(Level level, Fighter f, bool ignoreMonster = false)
         {
             Position pos = f.Position;
+            return GetNeighbourAccessFields(level, f.Position, f.GetType(), ignoreMonster);
+        }
+
+        public static List<Position> GetNeighbourAccessFields(Level level, Position pos, Type t, bool ignoreMonster = false)
+        {
             List<Position> result = new List<Position>();
-            if (level.IsFieldAccessible(pos.X, pos.Y - 1, f.GetType()))
+            if (level.IsFieldAccessible(pos.X, pos.Y - 1, t, ignoreMonster))
             {
                 result.Add(new Position(pos.X, pos.Y - 1));
             }
-            if (level.IsFieldAccessible(pos.X + 1, pos.Y, f.GetType()))
+            if (level.IsFieldAccessible(pos.X + 1, pos.Y, t, ignoreMonster))
             {
                 result.Add(new Position(pos.X + 1, pos.Y));
             }
-            if (level.IsFieldAccessible(pos.X - 1, pos.Y, f.GetType()))
+            if (level.IsFieldAccessible(pos.X - 1, pos.Y, t, ignoreMonster))
             {
                 result.Add(new Position(pos.X - 1, pos.Y));
             }
-            if (level.IsFieldAccessible(pos.X, pos.Y + 1, f.GetType()))
+            if (level.IsFieldAccessible(pos.X, pos.Y + 1, t, ignoreMonster))
             {
                 result.Add(new Position(pos.X, pos.Y + 1));
             }
             return result;
         }
-
         internal static int GetMinDistMove(Position reference, List<Position> choices)
         {
             // get distances to end position on the field

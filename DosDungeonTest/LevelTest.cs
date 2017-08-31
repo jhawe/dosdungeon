@@ -9,11 +9,24 @@ namespace DosDungeonTest
     [TestClass]
     public class LevelTest
     {
+        #region Test Methods
+        /// <summary>
+        /// assert the 'getneighbouraccessfields' method
+        /// </summary>
+        [TestMethod]
+        public void NeighbourFieldsTest()
+        {
+
+        }
+
+        /// <summary>
+        /// assert level generation
+        /// </summary>
         [TestMethod]
         public void LevelGeneratorTest()
         {
             int lsize = 10;
-            int nlevels = 1000;
+            int nlevels = 20000;
             // create 100 random levels and check
             // whether they all have a complete path 
             // from start to end
@@ -24,6 +37,7 @@ namespace DosDungeonTest
                 Assert.IsTrue(hp);
             }
         }
+        #endregion // Test Methods
 
         #region HasPath
         /// <summary>
@@ -36,65 +50,79 @@ namespace DosDungeonTest
         /// <returns></returns>
         private bool HasPath(Level l)
         {
-            // TODO
-            // coloring approach: start at start point in level,
+            // 'coloring' approach: start at start point in level,
             // then gradually 'color' all neighbouring fields while not found
             // then end
             // if at some point all is colored and no more can be colored
-            // --> not possible
+            // --> not possible, fail
             // but otherwise if the end gets colored as well -> fully functional path
+
             // in each iteration:
             // check neighbouring fields, color free fields which have not been visisted
             // mark the current list of fields as visited
             // add the newly colored fields as the fields for which to check neighbouring 
             // fields in the next iteration
-            LinkedList<Position> mp = l.Main;
-            Position[] m = new Position[mp.Count];
-            mp.CopyTo(m, 0);
+            List<Position> visited = new List<Position>();
+            List<Position> current = new List<Position>();
+            current.Add(l.Start);
 
-            for (int i = 0; i < m.Length; i++)
+            while (true)
             {
-                if (!AdjacentToAny(m[i], m)
-                    || !l.IsFieldAccessible(m[i], typeof(Player), true))
+                // mark current positions as visited
+                visited.AddRange(current);
+
+                // next list of 'current' positions
+                List<Position> next = new List<Position>();
+
+                foreach (Position p in current)
+                {
+                    List<Position> temp = LevelGenerator.GetNeighbourAccessFields(l, p, typeof(Player), true);
+                    foreach (Position toAdd in temp)
+                    {
+                        // did we get the endfield?
+                        // we then can immediately return
+                        if (Statics.SameField(l.End, toAdd))
+                        {
+                            return true;
+                        }
+                        // only add if not yet visited and if it is not in the
+                        // current list and if not yet added to the next field
+                        if (!InList(toAdd, visited) && !InList(toAdd, current)
+                            && !InList(toAdd, next))
+                        {
+                            next.Add(toAdd);
+                        }
+                    }
+                }
+                current = next;
+                // no next fields and we did not find the end
+                if (current.Count < 1)
                 {
                     return false;
                 }
-                // last check
-                if (i == m.Length - 1)
+            }
+        }
+        #endregion // HasPath
+
+        #region InList
+        /// <summary>
+        /// Only checks whether a position with the same coordinates
+        /// is already in a given list
+        /// </summary>
+        /// <param name="p"></param>
+        /// <param name="current"></param>
+        /// <returns></returns>
+        private bool InList(Position p, List<Position> current)
+        {
+            foreach (Position p2 in current)
+            {
+                if (Statics.SameField(p, p2))
                 {
-                    if (Statics.SameField(m[i], l.End))
-                    {
-                        return true;
-                    }
-                    else
-                    {
-                        return false;
-                    }
+                    return true;
                 }
             }
             return false;
-        } 
-        #endregion // HasPath
-
-        #region AdjacentToAny
-        /// <summary>
-        /// Just checks whether the provided position is adjacent to any in the list
-        /// </summary>
-        /// <param name="p"></param>
-        /// <param name="list"></param>
-        /// <returns></returns>
-        internal bool AdjacentToAny(Position p, Position[] list)
-        {
-            int cnt = 0;
-            foreach (Position cur in list)
-            {
-                if (Statics.Adjacent(p, cur))
-                {
-                    cnt++;
-                }
-            }
-            return cnt > 1;
-        } 
-        #endregion // AdjacentToAny
+        }
+        #endregion // InList        
     }
 }

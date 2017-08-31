@@ -19,11 +19,9 @@ namespace DosDungeon.Models
         int size;
         int[,] field;
         private Position start;
-        private Position end;
-        private Position playerPos;
+        private Position end;        
         private LinkedList<Position> mainPath;
-        private List<LinkedList<Position>> branches;
-        private int playerField;
+        private List<LinkedList<Position>> branches;        
         private List<Position> monsterStarts;
         #endregion // Class Member
 
@@ -80,7 +78,7 @@ namespace DosDungeon.Models
             }
         }
 
-        internal int Size
+        public int Size
         {
             get
             {
@@ -88,7 +86,7 @@ namespace DosDungeon.Models
             }
         }
 
-        internal Position Start
+        public Position Start
         {
             get
             {
