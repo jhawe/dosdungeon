@@ -6,18 +6,14 @@ using System.Collections.Generic;
 
 namespace DosDungeonTest
 {
+    /// <summary>
+    /// Class for unit tests. Currently only used to do the level 
+    /// generator tests
+    /// </summary>
     [TestClass]
     public class LevelTest
     {
         #region Test Methods
-        /// <summary>
-        /// assert the 'getneighbouraccessfields' method
-        /// </summary>
-        [TestMethod]
-        public void NeighbourFieldsTest()
-        {
-
-        }
 
         /// <summary>
         /// assert level generation
