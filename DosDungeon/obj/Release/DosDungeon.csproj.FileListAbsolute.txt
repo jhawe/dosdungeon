@@ -1,0 +1,8 @@
+D:\Users\johann.hawe\documents\visual studio 2017\Projects\DosDungeon\DosDungeon\bin\Release\DosDungeon.exe.config
+D:\Users\johann.hawe\documents\visual studio 2017\Projects\DosDungeon\DosDungeon\bin\Release\DosDungeon.exe
+D:\Users\johann.hawe\documents\visual studio 2017\Projects\DosDungeon\DosDungeon\bin\Release\DosDungeon.pdb
+D:\Users\johann.hawe\documents\visual studio 2017\Projects\DosDungeon\DosDungeon\obj\Release\DosDungeon.GameForm.resources
+D:\Users\johann.hawe\documents\visual studio 2017\Projects\DosDungeon\DosDungeon\obj\Release\DosDungeon.Properties.Resources.resources
+D:\Users\johann.hawe\documents\visual studio 2017\Projects\DosDungeon\DosDungeon\obj\Release\DosDungeon.csproj.GenerateResource.Cache
+D:\Users\johann.hawe\documents\visual studio 2017\Projects\DosDungeon\DosDungeon\obj\Release\DosDungeon.exe
+D:\Users\johann.hawe\documents\visual studio 2017\Projects\DosDungeon\DosDungeon\obj\Release\DosDungeon.pdb

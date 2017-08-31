@@ -204,13 +204,13 @@ namespace DosDungeon.Controller
                 this.nextMove = m;
                 // always instantly set the new direction
                 // the player is facing
-                MoveFighter(this.player);                
+                MoveFighter(this.player);
                 System.Threading.Thread.Sleep(100);
             }
 
             // only update after 0.3 seconds
             if (elapsedTime > TimeSpan.FromSeconds(0.3))
-            {                
+            {
                 this.nextMove = m;
                 lastTime = currentTime;
 
@@ -226,6 +226,8 @@ namespace DosDungeon.Controller
                         this.state = GameState.LevelFinished;
                         this.level.State = GameState.LevelFinished;
                     }
+                    // reset any remembered keydowns which have not yet been reset
+                    ResetKeys();
                 }
                 else if (this.state == GameState.LevelFinished)
                 {
@@ -256,6 +258,14 @@ namespace DosDungeon.Controller
         }
         #endregion // Update
 
+        #region ResetKeys
+        private void ResetKeys()
+        {
+            this.enterDown = false;
+            this.attackDown = false;
+        }
+        #endregion // ResetKeys
+
         #region IsTurn
         /// <summary>
         /// Checks whether the move to a specific position p would indicate
@@ -275,14 +285,8 @@ namespace DosDungeon.Controller
         /// </summary>
         private void RegisterKeyDown()
         {
-            this.enterDown = this.enterDown|Keyboard.IsKeyDown(Key.Enter);
-            this.attackDown = this.attackDown|Keyboard.IsKeyDown(Key.Space);
-
-            Position m = GetMove(this.player);
-            if (m != null && this.nextMove == null)
-            {
-                //this.nextMove = m;
-            }
+            this.enterDown = this.enterDown | Keyboard.IsKeyDown(Key.Enter);
+            this.attackDown = this.attackDown | Keyboard.IsKeyDown(Key.Space);
         }
         #endregion // RegisterKeyDown
 
@@ -562,9 +566,9 @@ namespace DosDungeon.Controller
                 // being generated in one go
                 System.Threading.Thread.Sleep(300);
             }
-            
+
         }
 
         #endregion // Methods
-    }    
+    }
 }
