@@ -21,8 +21,7 @@ Elements of the game:
 |--|--|
 |Treasures | Upon collection they either yield a heart (health point) or a random amount of coints between 1-50|
 |Monster | Randomly move around the level, will attack player if they stand in front of him|
-|Player | Can collect treasures and defeat monsters. For defeating monsters, player must stand in front of monsters, face them
-and press the attack button (SPACE)|
+|Player | Can collect treasures and defeat monsters. For defeating monsters, player must stand in front of monsters, face them and press the attack button (SPACE)|
 
 
 ###
