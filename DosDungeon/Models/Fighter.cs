@@ -2,7 +2,7 @@
 
 namespace DosDungeon.Models
 {
-    internal class Fighter
+    public class Fighter
     {
         #region Class Member
         /// <summary>

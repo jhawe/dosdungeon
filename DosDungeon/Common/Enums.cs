@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace DosDungeon
 {
-    internal enum GameState
+    public enum GameState
     {
         Pause,
         Running,
@@ -14,7 +14,7 @@ namespace DosDungeon
         GameOver
     }
 
-    internal enum Field
+    public enum Field
     {
         // a normal free field
         Free = 1,
@@ -33,7 +33,7 @@ namespace DosDungeon
         NA = 128
     }
 
-    internal enum Direction
+    public enum Direction
     {
         Up,
         Down,

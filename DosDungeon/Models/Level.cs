@@ -1,5 +1,6 @@
 ﻿using DosDungeon.Common;
 using DosDungeon.Controller;
+using DosDungeon.Views;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,7 +13,7 @@ namespace DosDungeon.Models
     /// Defines our dungeon levels. Levels are based on matrices with specific entries
     /// defining different fields, e.g. free, blocked etc.
     /// </summary>
-    internal class Level
+    public class Level
     {
         #region Class Member
         int size;
@@ -71,7 +72,7 @@ namespace DosDungeon.Models
             }
         }
 
-        internal LinkedList<Position> Main
+        public LinkedList<Position> Main
         {
             get
             {
@@ -95,7 +96,7 @@ namespace DosDungeon.Models
             }
         }
 
-        internal Position End
+        public Position End
         {
             get
             {
@@ -125,19 +126,33 @@ namespace DosDungeon.Models
         /// <param name="x"></param>
         /// <param name="y"></param>
         /// <returns></returns>
-        internal bool IsFieldAccessible(int x, int y, Type t)
+        public bool IsFieldAccessible(int x, int y, Type t, bool ignoreMonsters = false)
         {
             Field field = GetField(x, y);
             if (t.Equals(typeof(Player)))
             {
-                return (field == Field.Branch ||
-                    field == Field.Free || field == Field.Main || field == Field.Treasure);
+                if (ignoreMonsters)
+                {
+                    return (field == Field.Branch ||
+                    field == Field.Free || field == Field.Main || field == Field.Treasure
+                    || field == Field.Monster);
+                }
+                else
+                {
+                    return (field == Field.Branch ||
+                   field == Field.Free || field == Field.Main || field == Field.Treasure);
+                }
+
             }
             else
             {
                 return (field == Field.Branch ||
                 field == Field.Free || field == Field.Main);
             }
+        }
+        public bool IsFieldAccessible(Position p, Type t, bool ignoreMonsters = false)
+        {
+            return IsFieldAccessible(p.X, p.Y, t, ignoreMonsters);
         }
         #endregion // IsFieldAccessible     
 
@@ -192,7 +207,7 @@ namespace DosDungeon.Models
         internal void SetEnd(Position position)
         {
             this.end = position;
-            this.field[this.end.X, this.end.Y] = (int)Field.Main;
+            //this.field[this.end.X, this.end.Y] = (int)Field.Main;
         }
         #endregion // SetEnd
 
@@ -216,12 +231,12 @@ namespace DosDungeon.Models
         /// <param name="x">X pos of the field</param>
         /// <param name="y">Y pos of the field</param>
         /// <returns></returns>
-        internal Field GetField(Position p)
+        public Field GetField(Position p)
         {
             return GetField(p.X, p.Y);
         }
 
-        internal Field GetField(int x, int y)
+        public Field GetField(int x, int y)
         {
             // out of bounds
             if (x >= this.size | y >= this.size | x < 0 | y < 0)
@@ -264,7 +279,7 @@ namespace DosDungeon.Models
         /// <param name="pos">The position of the player to
         /// be set</param>
         internal void SetFighter(Position nPos, Position oPos, Type ftype)
-        {          
+        {
             if (ftype.Equals(typeof(Player)))
             {
                 // could be null during init
@@ -272,15 +287,32 @@ namespace DosDungeon.Models
                 {
                     this.field[oPos.X, oPos.Y] = (int)Field.Free;
                 }
-                this.field[nPos.X, nPos.Y] = (int)Field.Player;               
+                this.field[nPos.X, nPos.Y] = (int)Field.Player;
             }
-            else if(ftype.Equals(typeof(Monster)))
+            else if (ftype.Equals(typeof(Monster)))
             {
                 this.field[oPos.X, oPos.Y] = (int)Field.Free;
                 this.field[nPos.X, nPos.Y] = (int)Field.Monster;
             }
         }
         #endregion // SetFighter
+
+        #region Override methods
+        public override string ToString()
+        {
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < this.size; i++)
+            {
+                for (int j = 0; j < this.size; j++)
+                {
+                    Field f = GetField(i, j);
+                    sb.Append(NaiveView.GetFieldChar(f));
+                }
+                sb.AppendLine();
+            }
+            return sb.ToString();
+        }
+        #endregion // Override methods
 
         #endregion // Methods
     }

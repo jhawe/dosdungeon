@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace DosDungeon.Models
 {
-    internal class Position
+    public class Position
     {
         private int x;
         private int y;
@@ -17,14 +17,14 @@ namespace DosDungeon.Models
             this.y = y;
         }
 
-        internal int X
+        public int X
         {
             get
             {
                 return this.x;
             }
         }
-        internal int Y
+        public int Y
         {
             get
             {

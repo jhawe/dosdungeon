@@ -12,7 +12,7 @@ namespace DosDungeon.Views
         const char PLAYER = 'P';
         const char MONSTER = 'M';
         const char BLOCKED = 'B';
-        const char FREE = ' ';
+        const char FREE = 'F';
         const char END = 'E';
         const char TREASURE = 'T';
 
@@ -102,13 +102,16 @@ namespace DosDungeon.Views
         /// </summary>
         /// <param name="f">The field for which to get the char representation</param>
         /// <returns>The field's char representation</returns>
-        internal char GetFieldChar(Field f)
+        internal static char GetFieldChar(Field f)
         {
             var fc = FREE;
             switch (f)
             {
                 case Field.Blocked:
                     fc = BLOCKED;
+                    break;
+                case Field.Main:
+                    fc = 'M';
                     break;
                 case Field.Free:
                     fc = FREE;
@@ -124,7 +127,7 @@ namespace DosDungeon.Views
                     break;
                 case Field.Treasure:
                     fc = TREASURE;
-                    break;
+                    break;                    
                 default:
                     break;
             }
